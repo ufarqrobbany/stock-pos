@@ -1,0 +1,34 @@
+{
+    "editor.tabSize": 4,
+    "editor.formatOnSave": true,
+    "editor.detectIndentation": false,
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "prettier.enable": false,
+    "[javascript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "dotenv.enableAutocloaking": false,
+    "js/ts.tsdk.path": "./node_modules/typescript/lib",
+    "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports.biome": "explicit",
+        "source.fixAll.biome": "explicit"
+    }
+}

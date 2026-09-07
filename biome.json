@@ -1,34 +1,107 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	},
-	"files": {
-		"ignoreUnknown": false
-	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "tab"
-	},
-	"linter": {
-		"enabled": true,
-		"rules": {
-			"preset": "recommended"
-		}
-	},
-	"javascript": {
-		"formatter": {
-			"quoteStyle": "double"
-		}
-	},
-	"assist": {
-		"enabled": true,
-		"actions": {
-			"source": {
-				"organizeImports": "on"
-			}
-		}
-	}
+    "$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "ignoreUnknown": true,
+        "includes": ["src/**/*", "*.ts", "*.mjs", "*.json"]
+    },
+    "formatter": {
+        "enabled": true,
+        "formatWithErrors": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineEnding": "lf",
+        "lineWidth": 100
+    },
+    "assist": {
+        "enabled": true
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "correctness": {
+                "noUnusedImports": "error",
+                "noUnusedVariables": "error",
+                "useExhaustiveDependencies": "error",
+                "useHookAtTopLevel": "error",
+                "useJsxKeyInIterable": "error"
+            },
+            "security": {
+                "noBlankTarget": "error",
+                "noDangerouslySetInnerHtml": "error",
+                "noDangerouslySetInnerHtmlWithChildren": "error",
+                "noGlobalEval": "error"
+            },
+            "style": {
+                "noNestedTernary": "off",
+                "noNonNullAssertion": "warn",
+                "noParameterAssign": "error",
+                "useBlockStatements": "off",
+                "useConst": "error",
+                "useDefaultParameterLast": "error",
+                "useExportType": "error",
+                "useFragmentSyntax": "error",
+                "useImportType": "error",
+                "useNodejsImportProtocol": "error",
+                "useNumberNamespace": "error",
+                "useObjectSpread": "error",
+                "useSelfClosingElements": "error",
+                "useShorthandAssign": "error",
+                "useTemplate": "error",
+                "useThrowNewError": "error"
+            },
+            "suspicious": {
+                "noArrayIndexKey": "error",
+                "noAssignInExpressions": "error",
+                "noConsole": "warn",
+                "noDoubleEquals": "error",
+                "noExplicitAny": "warn",
+                "noFallthroughSwitchClause": "error",
+                "noVar": "error",
+                "useIsArray": "error"
+            }
+        }
+    },
+    "javascript": {
+        "jsxRuntime": "transparent",
+        "formatter": {
+            "quoteStyle": "single",
+            "jsxQuoteStyle": "double",
+            "quoteProperties": "asNeeded",
+            "trailingCommas": "es5",
+            "semicolons": "always",
+            "arrowParentheses": "always",
+            "bracketSpacing": true,
+            "bracketSameLine": false
+        }
+    },
+    "json": {
+        "formatter": {
+            "indentStyle": "space",
+            "indentWidth": 4,
+            "trailingCommas": "none"
+        }
+    },
+    "overrides": [
+        {
+            "includes": [
+                "commitlint.config.js",
+                "next.config.js",
+                "postcss.config.cjs",
+                ".lintstagedrc.js"
+            ],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "noCommonJs": "off",
+                        "useNodejsImportProtocol": "off"
+                    }
+                }
+            }
+        }
+    ]
 }
