@@ -1,0 +1,24 @@
+.input {
+  border-color: var(--mantine-color-surface-2);
+  font-size: 14px;
+}
+
+.input:focus,
+.input:focus-within,
+.input[data-focus] {
+  border-color: var(--mantine-color-primary-6);
+  box-shadow: 0 0 0 1px var(--mantine-color-primary-6);
+}
+
+.visibilityToggle {
+  color: var(--mantine-color-surface-4);
+}
+
+.visibilityToggle:hover {
+  color: var(--mantine-color-primary-6);
+  background-color: transparent;
+}
+
+.section {
+  color: var(--mantine-color-surface-4);
+}

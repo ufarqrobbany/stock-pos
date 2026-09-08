@@ -1,0 +1,25 @@
+.navLink,
+.miniIconBtn {
+  border-radius: 8px;
+  color: var(--mantine-color-neutral-2);
+  background-color: transparent;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.navLink:hover,
+.miniIconBtn:hover {
+  background-color: var(--mantine-color-neutral-8);
+  color: var(--mantine-color-neutral-0);
+}
+
+.navLink[data-active],
+.miniIconBtn[data-active] {
+  background-color: var(--mantine-color-primary-6);
+  color: var(--mantine-color-neutral-0);
+}
+
+.navLink[data-active]:hover,
+.miniIconBtn[data-active]:hover {
+  background-color: var(--mantine-color-primary-7);
+  color: var(--mantine-color-neutral-0);
+}
