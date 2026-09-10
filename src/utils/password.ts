@@ -1,0 +1,10 @@
+export async function hashPassword(password: string): Promise<string> {
+    const data = new TextEncoder().encode(password);
+    const buffer = await crypto.subtle.digest('SHA-256', data);
+
+    return Array.from(new Uint8Array(buffer), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
+    return (await hashPassword(plain)) === hash;
+}
