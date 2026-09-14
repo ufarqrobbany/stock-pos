@@ -1,53 +1,43 @@
 'use client';
 
-import { AppShell, Box } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { AppHeader } from '@/components/layout/AppHeader';
-import { AppSidebar } from '@/components/layout/AppSidebar';
+import { AppShell, useMantineTheme } from '@mantine/core';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { MainHeader } from '@/components/layout/MainHeader';
+import { MainSidebar } from '@/components/layout/MainSidebar';
 
 export default function MainAppLayout({ children }: { children: React.ReactNode }) {
-    const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] = useDisclosure(false);
-    const [isMini, { toggle: toggleMini }] = useDisclosure(false);
+    const theme = useMantineTheme();
+    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`);
+
+    const [sidebarOpened, { toggle: toggleSidebar, close: closeSidebar }] = useDisclosure(false);
+    const [isSidebarCompact, { toggle: toggleSidebarCompact }] = useDisclosure(false);
+
+    const activeSidebarCompact = Boolean(isDesktop && isSidebarCompact);
 
     return (
         <AppShell
+            layout="alt"
+            header={{ height: 64 }}
             navbar={{
-                width: isMini ? 72 : 250,
+                width: activeSidebarCompact ? 72 : 250,
                 breakpoint: 'sm',
-                collapsed: { mobile: !mobileOpened },
+                collapsed: { mobile: !sidebarOpened },
             }}
-            transitionDuration={200}
-            transitionTimingFunction="ease"
         >
-            <AppShell.Navbar
-                p="md"
-                bg="neutral.9"
-                style={{
-                    borderRight: '1px solid var(--mantine-color-neutral-8)',
-                    zIndex: 101,
-                }}
-            >
-                <AppSidebar isMini={isMini} toggleMini={toggleMini} onNavigate={closeMobile} />
+            <AppShell.Header bd="1px solid var(--mantine-color-surface-2)">
+                <MainHeader sidebarOpened={sidebarOpened} toggleSidebar={toggleSidebar} />
+            </AppShell.Header>
+
+            <AppShell.Navbar p="md" bg="neutral.9">
+                <MainSidebar
+                    isCompact={activeSidebarCompact}
+                    toggleCompact={toggleSidebarCompact}
+                    onClose={closeSidebar}
+                    onLogout={() => {}} // TODO
+                />
             </AppShell.Navbar>
 
-            <AppShell.Main style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <Box
-                    h={64}
-                    bg="white"
-                    top={0}
-                    style={{
-                        borderBottom: '1px solid var(--mantine-color-surface-2)',
-                        position: 'sticky',
-                        zIndex: 100,
-                    }}
-                >
-                    <AppHeader opened={mobileOpened} toggleMobile={toggleMobile} />
-                </Box>
-
-                <Box p="md" flex={1}>
-                    {children}
-                </Box>
-            </AppShell.Main>
+            <AppShell.Main>{children}</AppShell.Main>
         </AppShell>
     );
 }

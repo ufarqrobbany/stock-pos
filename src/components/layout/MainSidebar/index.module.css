@@ -1,0 +1,57 @@
+.toggleCompactBtn {
+  position: absolute;
+  top: 4px;
+  right: -28px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: var(--mantine-radius-xl);
+  border: 1px solid var(--mantine-color-neutral-6);
+  background-color: var(--mantine-color-neutral-8);
+  color: var(--mantine-color-white);
+}
+
+.toggleCompactBtn:hover {
+  background-color: var(--mantine-color-neutral-7);
+}
+
+.navLink,
+.miniIconBtn {
+  border-radius: 8px;
+  color: var(--mantine-color-neutral-2);
+  background-color: transparent;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.navLink:hover,
+.miniIconBtn:hover {
+  background-color: var(--mantine-color-neutral-8);
+  color: var(--mantine-color-neutral-0);
+}
+
+.navLink[data-active],
+.miniIconBtn[data-active] {
+  background-color: var(--mantine-color-primary-6);
+  color: var(--mantine-color-neutral-0);
+}
+
+.navLink[data-active]:hover,
+.miniIconBtn[data-active]:hover {
+  background-color: var(--mantine-color-primary-7);
+  color: var(--mantine-color-neutral-0);
+}
+
+.logoutBtn,
+.logoutMiniBtn {
+  border-radius: 8px;
+  color: var(--mantine-color-neutral-3);
+  background-color: transparent;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.logoutBtn:hover,
+.logoutMiniBtn:hover {
+  background-color: color-mix(in srgb, var(--mantine-color-red-6) 15%, transparent);
+  color: var(--mantine-color-red-5);
+}

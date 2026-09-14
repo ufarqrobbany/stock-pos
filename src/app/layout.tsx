@@ -6,7 +6,10 @@ import type { Metadata } from 'next';
 import { fontOutfit, theme } from '@/styles/theme';
 
 export const metadata: Metadata = {
-    title: 'StockPOS',
+    title: {
+        default: 'StockPOS',
+        template: '%s | StockPOS',
+    },
     description: 'Inventory Management System & Point of Sale',
 };
 
