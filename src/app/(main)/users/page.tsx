@@ -1,5 +1,10 @@
-import { Stack } from '@mantine/core';
+import { Group } from '@mantine/core';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Manajemen Pengguna',
+};
 
 export default function UsersPage() {
-    return <Stack>Manajemen Pengguna</Stack>;
+    return <Group p="md">Manajemen Pengguna</Group>;
 }
