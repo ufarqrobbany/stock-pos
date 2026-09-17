@@ -4,6 +4,7 @@ import { ActionIcon, Box, Group, NavLink, Stack, Text, Title } from '@mantine/co
 import { IconChevronLeft, IconChevronRight, IconLogout, IconX } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { UserRole } from '@/db/types/user';
 import classes from './index.module.css';
 import { sidebarRoutes } from './routes';
 
@@ -12,17 +13,18 @@ interface MainSidebarProps {
     toggleCompact: () => void;
     onClose?: () => void;
     onLogout?: () => void;
+    userRole?: UserRole;
 }
 
-export function MainSidebar({ isCompact, toggleCompact, onClose, onLogout }: MainSidebarProps) {
+export function MainSidebar({ isCompact, toggleCompact, onClose, onLogout, userRole }: MainSidebarProps) {
     const pathname = usePathname();
+    const visibleRoutes = sidebarRoutes.filter((item) => (userRole ? item.allowedRoles.includes(userRole) : false));
 
     return (
         <Box h="100%" style={{ position: 'relative' }}>
             <ActionIcon onClick={toggleCompact} visibleFrom="sm" className={classes.toggleCompactBtn}>
                 {isCompact ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
             </ActionIcon>
-
             <Stack justify="space-between" h="100%">
                 <Box>
                     <Group h={50} px="xs" mb="md" justify="space-between" wrap="nowrap">
@@ -36,12 +38,10 @@ export function MainSidebar({ isCompact, toggleCompact, onClose, onLogout }: Mai
                             <IconX size={20} stroke={1.5} />
                         </ActionIcon>
                     </Group>
-
                     <Stack gap={5}>
-                        {sidebarRoutes.map((item) => {
+                        {visibleRoutes.map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname.startsWith(item.link);
-
                             if (isCompact) {
                                 return (
                                     <ActionIcon
@@ -56,7 +56,6 @@ export function MainSidebar({ isCompact, toggleCompact, onClose, onLogout }: Mai
                                     </ActionIcon>
                                 );
                             }
-
                             return (
                                 <NavLink
                                     key={item.link}

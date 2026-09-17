@@ -1,10 +1,10 @@
 import { Avatar, Burger, Group, Stack, Text } from '@mantine/core';
-import type { User } from '@/db/types/user';
+import type { SessionUser } from '@/features/auth/types';
 
 interface MainHeaderProps {
     sidebarOpened: boolean;
     toggleSidebar: () => void;
-    user?: User | null;
+    user?: SessionUser | null;
 }
 
 export function MainHeader({ sidebarOpened, toggleSidebar, user }: MainHeaderProps) {
