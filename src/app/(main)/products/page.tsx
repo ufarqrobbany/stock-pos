@@ -3,86 +3,138 @@
 import {
     ActionIcon,
     Badge,
-    Box,
     Button,
     Card,
     Group,
-    Image,
     Select,
     Stack,
-    Switch,
-    Table,
     Text,
     TextInput,
     Title,
-    Tooltip,
 } from '@mantine/core';
+import { IconPlus, IconSearch, IconX } from '@tabler/icons-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DataTable } from '@/components/common/DataTable';
+import type { Category } from '@/db/types/product';
+import { createProductColumns } from '@/features/products/productColumns';
 import {
-    IconAlertTriangle,
-    IconChevronRight,
-    IconEdit,
-    IconPhoto,
-    IconPlus,
-    IconSearch,
-    IconTrash,
-    IconX,
-} from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
-import type { Product } from '../../../features/products/productData';
-import { loadProducts } from '../../../features/products/productData';
-
-const TABLE_HEADERS = [
-    { id: 'expand', label: '', width: 42 },
-    { id: 'photo', label: 'Foto', width: 58 },
-    { id: 'product', label: 'Produk & Deskripsi', width: '35%' },
-    { id: 'category', label: 'Kategori', width: 145 },
-    { id: 'sku', label: 'Varian / SKU', width: 110 },
-    { id: 'price', label: 'Rentang Harga', width: 130 },
-    { id: 'stock', label: 'Total Stok', width: 95 },
-    { id: 'status', label: 'Status', width: 80 },
-    { id: 'actions', label: 'Aksi', width: 70 },
-] as const;
+    deleteProduct,
+    loadCategories,
+    loadProducts,
+    PRODUCT_SORT_FIELDS,
+    type ProductListItem,
+    type ProductSortField,
+    updateProductStatus,
+} from '@/features/products/productData';
 
 export default function ProductsPage() {
-    const [products, setProducts] = useState<Product[]>([]);
+    const router = useRouter();
+    const [products, setProducts] = useState<ProductListItem[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [search, setSearch] = useState('');
-    const [category, setCategory] = useState<string | null>(null);
+    const [categoryId, setCategoryId] = useState<string | null>(null);
+    const [sortBy, setSortBy] = useState<ProductSortField>('name');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [total, setTotal] = useState(0);
+    const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(new Set());
+
+    const refreshProductList = useCallback(async () => {
+        const result = await loadProducts({ search, categoryId, sortBy, sortDirection });
+        setProducts(result.data);
+        setTotal(result.total);
+    }, [search, categoryId, sortBy, sortDirection]);
 
     useEffect(() => {
-        let isMounted = true;
-
-        loadProducts().then((loadedProducts) => {
-            if (isMounted) {
-                setProducts(loadedProducts);
-            }
-        });
-
-        return () => {
-            isMounted = false;
-        };
+        loadCategories().then(setCategories);
     }, []);
 
-    const categories = useMemo(
-        () =>
-            Array.from(new Set(products.map((product) => product.category))).map((name) => ({
-                value: name,
-                label: name,
-            })),
-        [products]
+    useEffect(() => {
+        void refreshProductList();
+    }, [refreshProductList]);
+
+    const handleEdit = (productId: string) => {
+        router.push(`/products/${productId}/edit`);
+    };
+
+    const handleStatusChange = async (product: ProductListItem, isActive: boolean) => {
+        await updateProductStatus(product.id, isActive);
+        await refreshProductList();
+    };
+
+    const handleDelete = async (product: ProductListItem) => {
+        if (!window.confirm(`Hapus produk "${product.name}" secara permanen?`)) return;
+
+        try {
+            await deleteProduct(product.id);
+            await refreshProductList();
+        } catch (error) {
+            window.alert(error instanceof Error ? error.message : 'Produk gagal dihapus.');
+        }
+    };
+
+    const toggleExpandedProduct = (productId: string) => {
+        setExpandedProductIds((current) => {
+            const next = new Set(current);
+
+            if (next.has(productId)) {
+                next.delete(productId);
+            } else {
+                next.add(productId);
+            }
+
+            return next;
+        });
+    };
+
+    const renderExpandedProduct = (product: ProductListItem) => (
+        <Stack gap="xs" p="sm" bg="surface.0">
+            <Text size="sm" fw={600}>
+                Daftar Varian / SKU
+            </Text>
+            {product.variants.length ? (
+                product.variants.map((variant) => (
+                    <Group key={variant.id} justify="space-between">
+                        <Text size="sm">
+                            {variant.name} · {variant.sku}
+                        </Text>
+                        <Text size="sm">
+                            Rp{variant.price.toLocaleString('id-ID')} · Stok {variant.stock}
+                        </Text>
+                    </Group>
+                ))
+            ) : (
+                <Text size="sm" c="neutral.4">
+                    Produk ini tidak memiliki varian terpisah.
+                </Text>
+            )}
+        </Stack>
     );
 
-    const filteredProducts = useMemo(() => {
-        const normalizedSearch = search.toLowerCase();
+    const productColumns = createProductColumns({
+        onEdit: handleEdit,
+        onStatusChange: handleStatusChange,
+        onDelete: handleDelete,
+        onToggleExpand: toggleExpandedProduct,
+        isExpanded: (productId) => expandedProductIds.has(productId),
+    });
 
-        return products.filter((product) => {
-            const matchesSearch = `${product.name} ${product.description}`
-                .toLowerCase()
-                .includes(normalizedSearch);
-            const matchesCategory = category === null || product.category === category;
+    const categoryOptions = useMemo(
+        () => categories.map((c) => ({ value: c.id, label: c.name })),
+        [categories]
+    );
 
-            return matchesSearch && matchesCategory;
-        });
-    }, [category, products, search]);
+    const handleSort = (columnId: string) => {
+        if (!PRODUCT_SORT_FIELDS.includes(columnId as ProductSortField)) return;
+
+        if (sortBy === columnId) {
+            setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortBy(columnId as ProductSortField);
+            setSortDirection('asc');
+        }
+    };
 
     return (
         <Stack gap="md">
@@ -94,9 +146,11 @@ export default function ProductsPage() {
                         minimum.
                     </Text>
                 </div>
-                <Button color="primary" leftSection={<IconPlus size={16} />}>
-                    Tambah Master Produk
-                </Button>
+                <Link href="/products/new">
+                    <Button color="primary" leftSection={<IconPlus size={16} />}>
+                        Tambah Master Produk
+                    </Button>
+                </Link>
             </Group>
 
             <Card withBorder p="md" radius="sm">
@@ -120,143 +174,35 @@ export default function ProductsPage() {
                                 ) : null
                             }
                             value={search}
-                            onChange={(event) => setSearch(event.currentTarget.value)}
+                            onChange={(e) => setSearch(e.currentTarget.value)}
                         />
                         <Select
                             w={200}
                             placeholder="Semua Kategori"
                             clearable
-                            data={categories}
-                            value={category}
-                            onChange={(value) => setCategory(value)}
+                            data={categoryOptions}
+                            value={categoryId}
+                            onChange={setCategoryId}
                         />
                     </Group>
                     <Badge variant="light" color="primary">
-                        {filteredProducts.length} PRODUK DITEMUKAN
+                        {total} PRODUK DITEMUKAN
                     </Badge>
                 </Group>
 
-                <Table.ScrollContainer minWidth={1050}>
-                    <Table verticalSpacing="sm" horizontalSpacing="sm">
-                        <Table.Thead>
-                            <Table.Tr>
-                                {TABLE_HEADERS.map((header) => (
-                                    <Table.Th key={header.id} style={{ width: header.width }}>
-                                        {header.label}
-                                    </Table.Th>
-                                ))}
-                            </Table.Tr>
-                        </Table.Thead>
-                        <Table.Tbody>
-                            {filteredProducts.map((product) => (
-                                <ProductRow key={product.id} product={product} />
-                            ))}
-                        </Table.Tbody>
-                    </Table>
-                </Table.ScrollContainer>
-
-                {!filteredProducts.length && (
-                    <Text ta="center" c="neutral.4" py="xl">
-                        Produk tidak ditemukan.
-                    </Text>
-                )}
+                <DataTable
+                    columns={productColumns}
+                    data={products}
+                    getRowKey={(item) => item.id}
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    minWidth={1050}
+                    emptyText="Produk tidak ditemukan."
+                    expandedRowIds={expandedProductIds}
+                    renderExpandedRow={renderExpandedProduct}
+                />
             </Card>
         </Stack>
-    );
-}
-
-function ProductRow({ product }: { product: Product }) {
-    const isLowStock = product.stock < 10;
-
-    return (
-        <Table.Tr>
-            <Table.Td>
-                <ActionIcon variant="subtle" color="neutral" size="sm" aria-label="Lihat detail">
-                    <IconChevronRight size={16} />
-                </ActionIcon>
-            </Table.Td>
-            <Table.Td>
-                {product.imageUrl ? (
-                    <Image src={product.imageUrl} alt={product.name} w={40} h={40} radius="sm" />
-                ) : (
-                    <Box
-                        w={40}
-                        h={40}
-                        bg="neutral.0"
-                        style={{ display: 'grid', placeItems: 'center', borderRadius: 6 }}
-                    >
-                        <IconPhoto size={20} color="var(--mantine-color-neutral-4)" />
-                    </Box>
-                )}
-            </Table.Td>
-            <Table.Td>
-                <Text fw={600} size="sm" lineClamp={1}>
-                    {product.name}
-                </Text>
-                <Text size="xs" c="neutral.4" lineClamp={1}>
-                    {product.description}
-                </Text>
-            </Table.Td>
-            <Table.Td>
-                <Badge variant="outline" color="neutral" size="sm">
-                    {product.category}
-                </Badge>
-            </Table.Td>
-            <Table.Td>
-                <Badge variant="light" color="surface" size="sm">
-                    {product.skuCount} SKU
-                </Badge>
-            </Table.Td>
-            <Table.Td>
-                <Text size="sm" fw={500}>
-                    {product.price}
-                </Text>
-            </Table.Td>
-            <Table.Td>
-                <Group gap={4} wrap="nowrap">
-                    <Text size="sm" fw={600} c={isLowStock ? 'red.6' : 'neutral.7'}>
-                        {product.stock}
-                    </Text>
-                    {isLowStock && (
-                        <Tooltip label="Stok rendah">
-                            <IconAlertTriangle size={15} color="var(--mantine-color-red-6)" />
-                        </Tooltip>
-                    )}
-                </Group>
-            </Table.Td>
-            <Table.Td>
-                <Switch
-                    size="sm"
-                    color="primary"
-                    checked={product.isActive}
-                    readOnly
-                    aria-label={`Status ${product.name}`}
-                />
-            </Table.Td>
-            <Table.Td>
-                <Group gap={2} wrap="nowrap">
-                    <Tooltip label="Edit produk">
-                        <ActionIcon
-                            variant="subtle"
-                            color="neutral"
-                            size="sm"
-                            aria-label="Edit produk"
-                        >
-                            <IconEdit size={16} />
-                        </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Nonaktifkan produk">
-                        <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            size="sm"
-                            aria-label="Nonaktifkan produk"
-                        >
-                            <IconTrash size={16} />
-                        </ActionIcon>
-                    </Tooltip>
-                </Group>
-            </Table.Td>
-        </Table.Tr>
     );
 }
