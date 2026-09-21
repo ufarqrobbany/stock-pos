@@ -55,7 +55,7 @@ export default function ProductsPage() {
     }, [refreshProductList]);
 
     const handleEdit = (productId: string) => {
-        router.push(`/products/${productId}/edit`);
+        router.push(`/products/edit?id=${productId}`);
     };
 
     const handleStatusChange = async (product: ProductListItem, isActive: boolean) => {

@@ -207,6 +207,89 @@ export async function deleteProduct(productId: string): Promise<void> {
     });
 }
 
+export async function loadProductById(productId: string): Promise<Product | undefined> {
+    return db.products.get(productId);
+}
+
+export async function loadVariantByProductId(productId: string): Promise<ProductVariant[]> {
+    return db.productVariants.where('productId').equals(productId).toArray();
+}
+
+export async function updateProduct(productId: string, input: CreateProductInput): Promise<void> {
+    await db.products.update(productId, {
+        name: input.name,
+        description: input.description,
+        categoryId: input.categoryId,
+        image: input.image || undefined,
+        hasVariants: input.hasVariants,
+        sku: input.sku,
+        sellingPrice: input.sellingPrice,
+        lowStockThreshold: input.lowStockThreshold,
+        isActive: input.isActive,
+        updatedAt: new Date().toISOString(),
+    });
+}
+
+export async function updateProductVariants(
+    productId: string,
+    variants: ProductVariant[]
+): Promise<void> {
+    const existingVariants = await loadVariantByProductId(productId);
+    const existingIds = new Set(existingVariants.map((v) => v.id));
+    const formIds = new Set(variants.map((v) => v.id));
+
+    // Cari varian lama yang dihapus dari form UI
+    const idsToDelete = existingVariants.filter((v) => !formIds.has(v.id)).map((v) => v.id);
+
+    await db.transaction('rw', [db.productVariants, db.stockBalances], async () => {
+        // Hapus varian dan stock balance-nya jika ada yang dibuang oleh user
+        if (idsToDelete.length > 0) {
+            await db.productVariants.bulkDelete(idsToDelete);
+            await db.stockBalances.where('variantId').anyOf(idsToDelete).delete();
+        }
+
+        for (const item of variants) {
+            const isExisting = existingIds.has(item.id);
+
+            if (isExisting) {
+                // Update varian yang sudah ada
+                await db.productVariants.update(item.id, {
+                    variantName: item.variantName,
+                    sku: item.sku,
+                    sellingPrice: typeof item.sellingPrice === 'number' ? item.sellingPrice : 0,
+                    lowStockThreshold:
+                        typeof item.lowStockThreshold === 'number' ? item.lowStockThreshold : 10,
+                    isActive: item.isActive,
+                    updatedAt: new Date().toISOString(),
+                });
+            } else {
+                // Insert varian baru yang ditambahkan di form edit
+                const createdVariantId = await db.productVariants.add({
+                    id: item.id || crypto.randomUUID(),
+                    productId,
+                    variantName: item.variantName,
+                    sku: item.sku,
+                    sellingPrice: typeof item.sellingPrice === 'number' ? item.sellingPrice : 0,
+                    lowStockThreshold:
+                        typeof item.lowStockThreshold === 'number' ? item.lowStockThreshold : 10,
+                    isActive: item.isActive,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                });
+
+                // Buat saldo awal stok (0) untuk varian baru
+                await db.stockBalances.add({
+                    id: crypto.randomUUID(),
+                    productId,
+                    variantId: createdVariantId,
+                    quantity: 0,
+                    updatedAt: new Date().toISOString(),
+                });
+            }
+        }
+    });
+}
+
 function mapProductToListItem(
     product: DbProduct,
     categories: Category[],
