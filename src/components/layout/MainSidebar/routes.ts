@@ -28,6 +28,12 @@ export const sidebarRoutes: SidebarRouteItem[] = [
         allowedRoles: ['OWNER', 'INVENTORY'],
     },
     {
+        label: 'Kategori Produk',
+        link: '/categories',
+        icon: IconBox,
+        allowedRoles: ['OWNER', 'INVENTORY'],
+    },
+    {
         label: 'Riwayat Transaksi',
         link: '/transactions',
         icon: IconReceipt,
