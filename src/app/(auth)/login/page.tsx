@@ -1,27 +1,29 @@
-'use client';
-
-import { Center, Container, Stack, Text, Title } from '@mantine/core';
+import { Center, Stack, Text, Title } from '@mantine/core';
+import type { Metadata } from 'next';
 import { LoginForm } from '@/features/auth/components/LoginForm';
+
+export const metadata: Metadata = {
+    title: 'Masuk',
+    description: 'Masuk ke sistem operasional StockPOS',
+};
 
 export default function LoginPage() {
     return (
         <Center mih="100vh" p="md">
-            <Container size="xs" p={0} w="100%" maw={420}>
-                <Stack gap="xl" align="center" w="100%">
-                    <Stack gap={2} align="center">
-                        <Title order={1} fw={800} fz={32} c="primary.6">
-                            <Text span fw={800} fz={28} c="neutral.6">
-                                Stock
-                            </Text>
-                            POS
-                        </Title>
-                        <Text fz="sm" c="neutral.4">
-                            Inventory Management System & Point of Sale
+            <Stack gap="xl" align="center" w="100%" maw={420}>
+                <Stack gap={2} align="center">
+                    <Title order={1} fw={800} fz={32} c="primary.6">
+                        <Text span fw={800} fz={28} c="neutral.6">
+                            Stock
                         </Text>
-                    </Stack>
-                    <LoginForm />
+                        POS
+                    </Title>
+                    <Text fz="sm" c="neutral.4">
+                        Inventory Management System & Point of Sale
+                    </Text>
                 </Stack>
-            </Container>
+                <LoginForm />
+            </Stack>
         </Center>
     );
 }
