@@ -1,7 +1,9 @@
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 import '@/styles/globals.css';
 
 import { ColorSchemeScript, MantineProvider } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import type { Metadata } from 'next';
 import { fontOutfit, theme } from '@/styles/theme';
 
@@ -21,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </head>
             <body>
                 <MantineProvider theme={theme} defaultColorScheme="light">
+                    <Notifications position="bottom-right" />
                     {children}
                 </MantineProvider>
             </body>

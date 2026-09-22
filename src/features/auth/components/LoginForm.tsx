@@ -5,7 +5,7 @@ import { IconArrowRight, IconLock, IconUser } from '@tabler/icons-react';
 import { useLoginForm } from '../hooks/useLoginForm';
 
 export function LoginForm() {
-    const { form, handleSubmit } = useLoginForm();
+    const { form, handleSubmit, isLoading } = useLoginForm();
 
     return (
         <Card component="form" onSubmit={form.onSubmit(handleSubmit)} w="100%" bg="white">
@@ -32,7 +32,7 @@ export function LoginForm() {
                     />
                 </Stack>
 
-                <Button type="submit" color="primary" rightSection={<IconArrowRight size={14} />}>
+                <Button type="submit" color="primary" loading={isLoading} rightSection={<IconArrowRight size={14} />}>
                     Masuk
                 </Button>
             </Stack>
