@@ -7,12 +7,7 @@ import { useEffect, useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import type { Category } from '@/db/types/product';
 import { createCategoryColumns } from '@/features/products/categoryColumns';
-import {
-    createCategory,
-    deleteCategory,
-    loadCategories,
-    updateCategory,
-} from '@/features/products/productData';
+import { categoryService } from '@/features/products/services/categoryService';
 
 export default function CategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -20,15 +15,15 @@ export default function CategoriesPage() {
     const [parentId, setParentId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
+    const [message] = useState('');
     const [opened, { open, close }] = useDisclosure(false);
 
     useEffect(() => {
-        void loadCategories().then(setCategories);
+        void categoryService.loadCategories().then(setCategories);
     }, []);
 
     const refreshCategories = async () => {
-        setCategories(await loadCategories());
+        setCategories(await categoryService.loadCategories());
     };
 
     const categoryOptions = categories.map((category) => ({
@@ -59,7 +54,6 @@ export default function CategoriesPage() {
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError('');
-        setMessage('');
 
         const normalizedName = name.trim();
 
@@ -85,13 +79,11 @@ export default function CategoriesPage() {
             return;
         }
 
-        if (editingId) {
-            await updateCategory(editingId, normalizedName, parentId);
-            setMessage('Kategori berhasil diperbarui.');
-        } else {
-            await createCategory(normalizedName, parentId);
-            setMessage('Kategori berhasil ditambahkan.');
-        }
+        const success = editingId
+            ? await categoryService.updateCategory(editingId, normalizedName, parentId)
+            : await categoryService.createCategory(normalizedName, parentId);
+
+        if (!success) return; // notifikasi gagal sudah ditembak dari categoryService
 
         await refreshCategories();
         close();
@@ -100,17 +92,11 @@ export default function CategoriesPage() {
 
     const handleDelete = async (category: Category) => {
         setError('');
-        setMessage('');
 
-        const result = await deleteCategory(category, categories);
-
-        if (!result.success) {
-            setError(result.message ?? 'Gagal menghapus kategori.');
-            return;
-        }
+        const success = await categoryService.deleteCategory(category.id, categories);
+        if (!success) return;
 
         await refreshCategories();
-        setMessage('Kategori berhasil dihapus.');
     };
 
     const getParentName = (parentIdValue: string | null | undefined) => {
@@ -139,8 +125,16 @@ export default function CategoriesPage() {
                 </Button>
             </Group>
 
-            {error && <Text c="red.7" size="sm">{error}</Text>}
-            {message && <Text c="green.7" size="sm">{message}</Text>}
+            {error && (
+                <Text c="red.7" size="sm">
+                    {error}
+                </Text>
+            )}
+            {message && (
+                <Text c="green.7" size="sm">
+                    {message}
+                </Text>
+            )}
 
             <Card withBorder p="md">
                 <DataTable
@@ -173,9 +167,7 @@ export default function CategoriesPage() {
                         <Select
                             label="Parent Kategori"
                             placeholder="Tidak ada parent"
-                            data={categoryOptions.filter(
-                                (category) => category.value !== editingId
-                            )}
+                            data={categoryOptions.filter((category) => category.value !== editingId)}
                             value={parentId}
                             onChange={setParentId}
                             clearable
@@ -194,9 +186,7 @@ export default function CategoriesPage() {
                                 Batal
                             </Button>
 
-                            <Button type="submit">
-                                {editingId ? 'Simpan Perubahan' : 'Simpan Kategori'}
-                            </Button>
+                            <Button type="submit">{editingId ? 'Simpan Perubahan' : 'Simpan Kategori'}</Button>
                         </Group>
                     </Stack>
                 </form>

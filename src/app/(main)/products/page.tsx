@@ -1,17 +1,6 @@
 'use client';
 
-import {
-    ActionIcon,
-    Badge,
-    Button,
-    Card,
-    Group,
-    Select,
-    Stack,
-    Text,
-    TextInput,
-    Title,
-} from '@mantine/core';
+import { ActionIcon, Badge, Button, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconPlus, IconSearch, IconX } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,14 +9,13 @@ import { DataTable } from '@/components/common/DataTable';
 import type { Category } from '@/db/types/product';
 import { createProductColumns } from '@/features/products/productColumns';
 import {
-    deleteProduct,
-    loadCategories,
     loadProducts,
     PRODUCT_SORT_FIELDS,
     type ProductListItem,
     type ProductSortField,
-    updateProductStatus,
 } from '@/features/products/productData';
+import { categoryService } from '@/features/products/services/categoryService';
+import { productService } from '@/features/products/services/productService';
 
 export default function ProductsPage() {
     const router = useRouter();
@@ -47,7 +35,7 @@ export default function ProductsPage() {
     }, [search, categoryId, sortBy, sortDirection]);
 
     useEffect(() => {
-        loadCategories().then(setCategories);
+        categoryService.loadCategories().then(setCategories);
     }, []);
 
     useEffect(() => {
@@ -59,18 +47,18 @@ export default function ProductsPage() {
     };
 
     const handleStatusChange = async (product: ProductListItem, isActive: boolean) => {
-        await updateProductStatus(product.id, isActive);
-        await refreshProductList();
+        const success = await productService.updateProductStatus(product.id, isActive);
+        if (success) {
+            await refreshProductList();
+        }
     };
 
     const handleDelete = async (product: ProductListItem) => {
         if (!window.confirm(`Hapus produk "${product.name}" secara permanen?`)) return;
 
-        try {
-            await deleteProduct(product.id);
+        const success = await productService.deleteProduct(product.id);
+        if (success) {
             await refreshProductList();
-        } catch (error) {
-            window.alert(error instanceof Error ? error.message : 'Produk gagal dihapus.');
         }
     };
 
@@ -120,10 +108,7 @@ export default function ProductsPage() {
         isExpanded: (productId) => expandedProductIds.has(productId),
     });
 
-    const categoryOptions = useMemo(
-        () => categories.map((c) => ({ value: c.id, label: c.name })),
-        [categories]
-    );
+    const categoryOptions = useMemo(() => categories.map((c) => ({ value: c.id, label: c.name })), [categories]);
 
     const handleSort = (columnId: string) => {
         if (!PRODUCT_SORT_FIELDS.includes(columnId as ProductSortField)) return;
@@ -142,8 +127,7 @@ export default function ProductsPage() {
                 <div>
                     <Title order={2}>Master Produk &amp; SKU</Title>
                     <Text c="neutral.4" size="sm">
-                        Kelola data utama produk, foto, atribut varian, harga jual, dan batas stok
-                        minimum.
+                        Kelola data utama produk, foto, atribut varian, harga jual, dan batas stok minimum.
                     </Text>
                 </div>
                 <Link href="/products/new">

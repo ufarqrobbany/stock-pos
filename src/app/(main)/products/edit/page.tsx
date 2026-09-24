@@ -3,15 +3,11 @@
 import { Stack, Text, Title } from '@mantine/core';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { productRepository } from '@/db/repositories/productRepository';
 import type { Category } from '@/db/types/product';
 import { ProductForm, type ProductFormValues } from '@/features/products/components/productForm';
-import {
-    loadCategories,
-    loadProductById,
-    loadVariantByProductId,
-    updateProduct,
-    updateProductVariants,
-} from '@/features/products/productData';
+import { categoryService } from '@/features/products/services/categoryService';
+import { productService } from '@/features/products/services/productService';
 
 export default function EditProductPage() {
     const router = useRouter();
@@ -33,46 +29,48 @@ export default function EditProductPage() {
                 return;
             }
 
-            try {
-                setFetching(true);
-                const [fetchedCategories, product] = await Promise.all([loadCategories(), loadProductById(productId)]);
+            setFetching(true);
 
-                setCategories(fetchedCategories);
+            const [fetchedCategories, productRes] = await Promise.all([
+                categoryService.loadCategories(),
+                productRepository.loadProductById(productId),
+            ]);
 
-                if (!product) {
-                    setError('Produk tidak ditemukan');
-                    return;
-                }
+            setCategories(fetchedCategories);
 
-                let loadedVariants: ProductFormValues['variants'] = [];
-                if (product.hasVariants) {
-                    const existingVariants = await loadVariantByProductId(productId);
-                    loadedVariants = existingVariants.map((v) => ({
-                        id: v.id,
-                        variantName: v.variantName,
-                        sku: v.sku,
-                        sellingPrice: v.sellingPrice,
-                        lowStockThreshold: v.lowStockThreshold,
-                        isActive: v.isActive,
-                    }));
-                }
-
-                setInitialValues({
-                    name: product.name,
-                    description: product.description ?? '',
-                    categoryId: product.categoryId,
-                    image: product.image ?? '',
-                    hasVariants: product.hasVariants,
-                    sku: product.sku ?? '',
-                    sellingPrice: product.sellingPrice ?? '',
-                    lowStockThreshold: product.lowStockThreshold ?? 10,
-                    variants: loadedVariants,
-                });
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Gagal memuat data produk.');
-            } finally {
+            if (!productRes.success || !productRes.data) {
+                setError('Produk tidak ditemukan');
                 setFetching(false);
+                return;
             }
+
+            const product = productRes.data;
+
+            let loadedVariants: ProductFormValues['variants'] = [];
+            if (product.hasVariants) {
+                const variantsRes = await productRepository.loadVariantByProductId(productId);
+                loadedVariants = (variantsRes.data ?? []).map((v) => ({
+                    id: v.id,
+                    variantName: v.variantName,
+                    sku: v.sku,
+                    sellingPrice: v.sellingPrice,
+                    lowStockThreshold: v.lowStockThreshold,
+                    isActive: v.isActive,
+                }));
+            }
+
+            setInitialValues({
+                name: product.name,
+                description: product.description ?? '',
+                categoryId: product.categoryId,
+                image: product.image ?? '',
+                hasVariants: product.hasVariants,
+                sku: product.sku ?? '',
+                sellingPrice: product.sellingPrice ?? '',
+                lowStockThreshold: product.lowStockThreshold ?? 10,
+                variants: loadedVariants,
+            });
+            setFetching(false);
         }
 
         void initData();
@@ -83,8 +81,9 @@ export default function EditProductPage() {
         setError('');
         setLoading(true);
 
-        try {
-            await updateProduct(productId, {
+        const success = await productService.updateProductWithVariants(
+            productId,
+            {
                 name: values.name.trim(),
                 description: values.description.trim() || undefined,
                 categoryId: values.categoryId as string,
@@ -98,30 +97,23 @@ export default function EditProductPage() {
                     !values.hasVariants && typeof values.lowStockThreshold === 'number'
                         ? values.lowStockThreshold
                         : null,
-            });
+            },
+            values.variants.map((v) => ({
+                id: v.id,
+                productId,
+                variantName: v.variantName.trim(),
+                sku: v.sku.trim(),
+                sellingPrice: typeof v.sellingPrice === 'number' ? v.sellingPrice : 0,
+                lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 10,
+                isActive: v.isActive,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            }))
+        );
 
-            if (values.hasVariants) {
-                await updateProductVariants(
-                    productId,
-                    values.variants.map((v) => ({
-                        id: v.id,
-                        productId,
-                        variantName: v.variantName.trim(),
-                        sku: v.sku.trim(),
-                        sellingPrice: typeof v.sellingPrice === 'number' ? v.sellingPrice : 0,
-                        lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 10,
-                        isActive: v.isActive,
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                    }))
-                );
-            }
-
+        setLoading(false);
+        if (success) {
             router.push('/products');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan.');
-        } finally {
-            setLoading(false);
         }
     };
 

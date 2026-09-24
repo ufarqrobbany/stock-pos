@@ -5,12 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Category } from '@/db/types/product';
 import { ProductForm, type ProductFormValues } from '@/features/products/components/productForm';
-import {
-    createInitialStockBalances,
-    createProduct,
-    createProductVariants,
-    loadCategories,
-} from '@/features/products/productData';
+import { categoryService } from '@/features/products/services/categoryService';
+import { productService } from '@/features/products/services/productService';
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -19,15 +15,15 @@ export default function NewProductPage() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        void loadCategories().then(setCategories);
+        void categoryService.loadCategories().then(setCategories);
     }, []);
 
     const handleSubmit = async (values: ProductFormValues) => {
         setError('');
         setLoading(true);
 
-        try {
-            const createdProduct = await createProduct({
+        const success = await productService.createProductWithVariants(
+            {
                 name: values.name.trim(),
                 description: values.description.trim(),
                 categoryId: values.categoryId as string,
@@ -41,33 +37,21 @@ export default function NewProductPage() {
                         ? values.lowStockThreshold
                         : null,
                 isActive: true,
-            });
+            },
+            values.hasVariants
+                ? values.variants.map((v) => ({
+                      variantName: v.variantName.trim(),
+                      sku: v.sku.trim(),
+                      sellingPrice: typeof v.sellingPrice === 'number' ? v.sellingPrice : 0,
+                      lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 10,
+                      isActive: v.isActive,
+                  }))
+                : []
+        );
 
-            if (values.hasVariants) {
-                const createVariants = await createProductVariants(
-                    values.variants.map((v) => ({
-                        productId: createdProduct.id,
-                        variantName: v.variantName.trim(),
-                        sku: v.sku.trim(),
-                        sellingPrice: typeof v.sellingPrice === 'number' ? v.sellingPrice : 0,
-                        lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 10,
-                        isActive: v.isActive,
-                    }))
-                );
-
-                await createInitialStockBalances(
-                    createdProduct.id,
-                    createVariants.map((v) => v.id)
-                );
-            } else {
-                await createInitialStockBalances(createdProduct.id, [null]);
-            }
-
+        setLoading(false);
+        if (success) {
             router.push('/products');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Gagal menyimpan produk.');
-        } finally {
-            setLoading(false);
         }
     };
 
