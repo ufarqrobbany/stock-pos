@@ -17,29 +17,44 @@
 }
 
 .navLink,
-.miniIconBtn {
-  border-radius: 8px;
+.miniIconBtn,
+.compactMenuItem {
+  border-radius: var(--mantine-radius-md);
   color: var(--mantine-color-neutral-2);
   background-color: transparent;
   transition: background-color 150ms ease, color 150ms ease;
 }
 
 .navLink:hover,
-.miniIconBtn:hover {
+.miniIconBtn:hover,
+.compactMenuItem:hover {
   background-color: var(--mantine-color-neutral-8);
   color: var(--mantine-color-neutral-0);
 }
 
 .navLink[data-active],
-.miniIconBtn[data-active] {
+.miniIconBtn[data-active],
+.compactMenuItem[data-active] {
   background-color: var(--mantine-color-primary-6);
   color: var(--mantine-color-neutral-0);
 }
 
 .navLink[data-active]:hover,
-.miniIconBtn[data-active]:hover {
+.miniIconBtn[data-active]:hover,
+.compactMenuItem[data-active]:hover {
   background-color: var(--mantine-color-primary-7);
   color: var(--mantine-color-neutral-0);
+}
+
+.compactDropdown {
+  padding: var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-neutral-9);
+}
+
+.compactMenuItem {
+    margin-top: 5px;
+    font-size: 13px;
 }
 
 .logoutBtn,
