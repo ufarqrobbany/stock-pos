@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionIcon, Badge, Group, Switch, Text } from '@mantine/core';
+import { ActionIcon, Avatar, Badge, Group, Switch, Text } from '@mantine/core';
 import { IconChevronDown, IconChevronRight, IconEdit, IconTrash } from '@tabler/icons-react';
 import type { Column } from '@/components/common/DataTable';
 import type { ProductListItem } from './productData';
@@ -34,12 +34,17 @@ export function createProductColumns({
                         aria-label={isExpanded(product.id) ? 'Tutup varian' : 'Buka varian'}
                         onClick={() => onToggleExpand(product.id)}
                     >
-                        {isExpanded(product.id) ? (
-                            <IconChevronDown size={14} />
-                        ) : (
-                            <IconChevronRight size={14} />
-                        )}
+                        {isExpanded(product.id) ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
                     </ActionIcon>
+
+                    {/* Thumbnail Foto Produk */}
+                    <Avatar
+                        src={product.image || product.imageUrl || product.image}
+                        alt={product.name}
+                        radius="md"
+                        size="md"
+                    />
+
                     <div>
                         <Text fw={600} size="sm">
                             {product.name}

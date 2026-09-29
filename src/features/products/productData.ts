@@ -25,6 +25,7 @@ export interface ProductListItem {
     stock: number;
     isActive: boolean;
     variants: ProductListVariant[];
+    image?: string | null;
 }
 
 export interface ProductListVariant {

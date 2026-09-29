@@ -1,8 +1,25 @@
 'use client';
 
-import { Button, Card, Group, NumberInput, Select, Stack, Switch, Text, Textarea, TextInput } from '@mantine/core';
+import {
+    ActionIcon,
+    Button,
+    Card,
+    Group,
+    Image,
+    Input,
+    LoadingOverlay,
+    NumberInput,
+    Select,
+    Stack,
+    Switch,
+    Text,
+    Textarea,
+    TextInput,
+    Tooltip,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useEffect } from 'react';
+import { IconTrash } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 import type { Category } from '@/db/types/product';
 import { ProductVariantForm, type VariantFormItem } from '@/features/products/components/productVariantForm';
 
@@ -47,6 +64,8 @@ export function ProductForm({
     submitLabel = 'Simpan Produk',
     onCancel,
 }: ProductFormProps) {
+    const [uploading, setUploading] = useState(false);
+
     const form = useForm<ProductFormValues>({
         mode: 'controlled',
         initialValues: defaultValues,
@@ -89,11 +108,70 @@ export function ProductForm({
         }
     };
 
+    const deleteOldImage = async (imageUrl: string) => {
+        if (!imageUrl) return;
+        try {
+            await fetch('/api/upload', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl }),
+            });
+        } catch (err) {
+            console.error('Gagal menghapus gambar lama:', err);
+        }
+    };
+
+    const handleFileUpload = async (file: File | null) => {
+        if (!file) return;
+
+        const oldImage = form.values.image;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+
+                // 1. Hapus gambar lama dari server/folder public jika ada
+                if (oldImage && oldImage !== data.url) {
+                    await deleteOldImage(oldImage);
+                }
+
+                // 2. Set gambar baru ke form
+                form.setFieldValue('image', data.url);
+            }
+        } catch (error) {
+            console.error('Gagal mengunggah file:', error);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleRemoveImage = async () => {
+        const currentImage = form.values.image;
+
+        // Hapus file fisik di folder public
+        if (currentImage) {
+            await deleteOldImage(currentImage);
+        }
+
+        // Reset nilai di form
+        form.setFieldValue('image', '');
+    };
+
     return (
         <form onSubmit={form.onSubmit((values) => onSubmit(values))}>
             <Stack gap="lg">
                 {/* Informasi Dasar Produk */}
-                <Card withBorder p="md">
+                <Card withBorder p="md" pos="relative">
+                    <LoadingOverlay visible={uploading} overlayProps={{ blur: 1 }} />
                     <Stack gap="sm">
                         <TextInput
                             label="Nama Produk"
@@ -121,12 +199,69 @@ export function ProductForm({
                             key={form.key('description')}
                             {...form.getInputProps('description')}
                         />
-                        <TextInput
-                            label="URL Gambar (Opsional)"
-                            placeholder="https://..."
-                            key={form.key('image')}
-                            {...form.getInputProps('image')}
-                        />
+
+                        {/* Input Foto Native HTML + Teks Keterangan & Preview */}
+                        <Stack gap={4}>
+                            <Input.Wrapper label="Foto Produk (Opsional)">
+                                <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        void handleFileUpload(file);
+                                    }}
+                                    style={{ display: 'block', marginTop: '4px' }}
+                                />
+                            </Input.Wrapper>
+                            <Text size="xs" c="dimmed">
+                                Format: JPG, JPEG, PNG, WEBP, Ukuran Max. 3 MB
+                            </Text>
+
+                            {/* Indicator / Preview foto yang sedang di-assign */}
+                            {form.values.image && (
+                                <Group
+                                    justify="space-between"
+                                    align="center"
+                                    mt="xs"
+                                    p="xs"
+                                    bg="var(--mantine-color-gray-0)"
+                                    style={{ borderRadius: '6px' }}
+                                >
+                                    <Group gap="xs">
+                                        <Image
+                                            src={form.values.image}
+                                            alt="Preview Produk"
+                                            w={40}
+                                            h={40}
+                                            radius="sm"
+                                            fallbackSrc="https://placehold.co/40x40?text=No+Image"
+                                        />
+                                        <Stack gap={0}>
+                                            <Text size="xs" fw={600} c="green.7">
+                                                Foto Terpasang
+                                            </Text>
+                                            <Text size="xs" c="dimmed" style={{ wordBreak: 'break-all' }}>
+                                                {form.values.image}
+                                            </Text>
+                                        </Stack>
+                                    </Group>
+
+                                    {/* Tombol Hapus Foto */}
+                                    <Tooltip label="Hapus Foto">
+                                        <ActionIcon
+                                            color="red"
+                                            variant="subtle"
+                                            size="sm"
+                                            type="button"
+                                            aria-label="Hapus Foto Produk"
+                                            onClick={handleRemoveImage}
+                                        >
+                                            <IconTrash size={16} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                </Group>
+                            )}
+                        </Stack>
                     </Stack>
                 </Card>
 

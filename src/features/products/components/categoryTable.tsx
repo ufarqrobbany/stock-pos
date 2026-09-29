@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, Group, Modal, Stack, Text, Title } from '@mantine/core';
+import { Button, Card, Group, Modal, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -10,7 +10,7 @@ import { createCategoryColumns } from '@/features/products/categoryColumns';
 import { CategoryForm, type CategoryFormValues } from '@/features/products/components/categoryForm';
 import { categoryService } from '@/features/products/services/categoryService';
 
-export default function CategoriesPage() {
+export function CategoryTable() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [initialValues, setInitialValues] = useState<Partial<CategoryFormValues>>({});
@@ -45,7 +45,7 @@ export default function CategoriesPage() {
             : await categoryService.createCategory(values.name.trim(), values.parentId);
 
         setLoading(false);
-        if (!success) return; // notifikasi gagal sudah ditembak dari categoryService
+        if (!success) return;
 
         await refreshCategories();
         close();
@@ -71,14 +71,7 @@ export default function CategoriesPage() {
 
     return (
         <Stack gap="md">
-            <Group justify="space-between" align="flex-start">
-                <div>
-                    <Title order={2}>Kelola Kategori</Title>
-                    <Text c="neutral.4" size="sm">
-                        Tambah dan kelola kategori produk.
-                    </Text>
-                </div>
-
+            <Group justify="flex-end">
                 <Button leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
                     Tambah Kategori
                 </Button>
