@@ -1,4 +1,3 @@
-import { Group, Stack, Text, Title } from '@mantine/core';
 import { cookies } from 'next/headers';
 import { RoleWrapper } from '@/features/auth/components/RoleWrapper';
 import { CategoryTable } from '@/features/products/components/categoryTable';
@@ -10,18 +9,9 @@ export default async function CategoriesPage() {
 
     return (
         <RoleWrapper allowedRoles={['OWNER', 'INVENTORY']} user={user} type="page">
-            <Stack gap="md">
-                <Group justify="space-between" align="flex-start">
-                    <div>
-                        <Title order={2}>Kelola Kategori</Title>
-                        <Text c="neutral.4" size="sm">
-                            Tambah dan kelola kategori produk.
-                        </Text>
-                    </div>
-                </Group>
-
+            <div style={{ paddingLeft: 'var(--mantine-spacing-xl)', paddingRight: 'var(--mantine-spacing-xl)' }}>
                 <CategoryTable />
-            </Stack>
+            </div>
         </RoleWrapper>
     );
 }

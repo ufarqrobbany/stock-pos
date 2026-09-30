@@ -12,7 +12,7 @@ export default async function ProductsPage() {
 
     return (
         <RoleWrapper allowedRoles={['OWNER', 'INVENTORY']} user={user} type="page">
-            <Stack gap="md">
+            <Stack gap="md" px="xl">
                 <Group justify="space-between" align="flex-start">
                     <div>
                         <Title order={2}>Master Produk &amp; SKU</Title>

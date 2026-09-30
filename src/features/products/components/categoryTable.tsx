@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, Group, Modal, Stack } from '@mantine/core';
+import { Button, Card, Group, Modal, Stack, Text, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -70,9 +70,15 @@ export function CategoryTable() {
     });
 
     return (
-        <Stack gap="md">
-            <Group justify="flex-end">
-                <Button leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
+        <Stack gap="md" px="xl">
+            <Group justify="space-between" align="flex-start">
+                <div>
+                    <Title order={2}>Kelola Kategori</Title>
+                    <Text c="neutral.4" size="sm">
+                        Tambah dan kelola kategori produk.
+                    </Text>
+                </div>
+                <Button color="primary" leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
                     Tambah Kategori
                 </Button>
             </Group>

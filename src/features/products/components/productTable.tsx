@@ -130,7 +130,7 @@ export function ProductTable() {
     };
 
     return (
-        <Card withBorder p="md" radius="sm">
+        <Card withBorder p="md">
             <Group justify="space-between" align="center" mb="md">
                 <Group align="center" gap="sm">
                     <TextInput
