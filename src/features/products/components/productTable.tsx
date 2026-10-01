@@ -1,18 +1,13 @@
 'use client';
 
-import { ActionIcon, Avatar, Badge, Card, Group, Select, Stack, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Avatar, Badge, Card, Group, Pagination, Select, Stack, Text, TextInput } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import type { Category } from '@/db/types/product';
 import { createProductColumns } from '@/features/products/productColumns';
-import {
-    loadProducts,
-    PRODUCT_SORT_FIELDS,
-    type ProductListItem,
-    type ProductSortField,
-} from '@/features/products/productData';
+import { PRODUCT_SORT_FIELDS, type ProductListItem, type ProductSortField } from '@/features/products/productData';
 import { categoryService } from '@/features/products/services/categoryService';
 import { productService } from '@/features/products/services/productService';
 
@@ -24,14 +19,29 @@ export function ProductTable() {
     const [categoryId, setCategoryId] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState<ProductSortField>('name');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    // pagination
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+
     const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(new Set());
 
     const refreshProductList = useCallback(async () => {
-        const result = await loadProducts({ search, categoryId, sortBy, sortDirection });
-        setProducts(result.data);
+        const result = await productService.loadProducts({
+            search,
+            categoryId,
+            sortBy,
+            sortDirection,
+            page,
+            pageSize,
+        });
+
+        setProducts(result.items);
         setTotal(result.total);
-    }, [search, categoryId, sortBy, sortDirection]);
+        setTotalPages(result.totalPages);
+    }, [search, categoryId, sortBy, sortDirection, page, pageSize]);
 
     useEffect(() => {
         categoryService.loadCategories().then(setCategories);
@@ -40,6 +50,16 @@ export function ProductTable() {
     useEffect(() => {
         void refreshProductList();
     }, [refreshProductList]);
+
+    const handleSearchChange = (value: string) => {
+        setSearch(value);
+        setPage(1);
+    };
+
+    const handleCategoryChange = (value: string | null) => {
+        setCategoryId(value);
+        setPage(1);
+    };
 
     const handleEdit = (productId: string) => {
         router.push(`/products/edit?id=${productId}`);
@@ -143,7 +163,7 @@ export function ProductTable() {
                                     variant="subtle"
                                     color="neutral"
                                     size="sm"
-                                    onClick={() => setSearch('')}
+                                    onClick={() => handleSearchChange('')}
                                     aria-label="Hapus pencarian"
                                 >
                                     <IconX size={14} />
@@ -151,7 +171,7 @@ export function ProductTable() {
                             ) : null
                         }
                         value={search}
-                        onChange={(e) => setSearch(e.currentTarget.value)}
+                        onChange={(e) => handleSearchChange(e.currentTarget.value)}
                     />
                     <Select
                         w={200}
@@ -159,7 +179,7 @@ export function ProductTable() {
                         clearable
                         data={categoryOptions}
                         value={categoryId}
-                        onChange={setCategoryId}
+                        onChange={handleCategoryChange}
                     />
                 </Group>
                 <Badge variant="light" color="primary">
@@ -179,6 +199,36 @@ export function ProductTable() {
                 expandedRowIds={expandedProductIds}
                 renderExpandedRow={renderExpandedProduct}
             />
+
+            {/* pagination */}
+            {total > 0 && (
+                <Group justify="space-between" align="center" mt="md">
+                    <Text size="sm" c="dimmed">
+                        Menampilkan {products.length ? (page - 1) * pageSize + 1 : 0} -{' '}
+                        {Math.min(page * pageSize, total)} dari {total} produk
+                    </Text>
+                    <Group gap="xs">
+                        <Select
+                            w={110}
+                            size="xs"
+                            value={String(pageSize)}
+                            onChange={(val) => {
+                                if (val) {
+                                    setPageSize(Number(val));
+                                    setPage(1);
+                                }
+                            }}
+                            data={[
+                                { value: '5', label: '5 / hal' },
+                                { value: '10', label: '10 / hal' },
+                                { value: '20', label: '20 / hal' },
+                                { value: '50', label: '50 / hal' },
+                            ]}
+                        />
+                        <Pagination total={totalPages} value={page} onChange={setPage} size="sm" />
+                    </Group>
+                </Group>
+            )}
         </Card>
     );
 }

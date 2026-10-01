@@ -1,3 +1,5 @@
+import type { PaginatedResult } from '@/types/common';
+
 export const PRODUCT_SORT_FIELDS = ['name', 'categoryName', 'skuCount', 'price', 'stock'] as const;
 
 export type ProductSortField = (typeof PRODUCT_SORT_FIELDS)[number];
@@ -7,6 +9,8 @@ export interface ProductQuery {
     categoryId?: string | null;
     sortBy?: ProductSortField;
     sortDirection?: 'asc' | 'desc';
+    page?: number;
+    pageSize?: number;
 }
 
 export interface ProductListVariant {
@@ -32,10 +36,7 @@ export interface ProductListItem {
     image?: string | null;
 }
 
-export interface ProductListResult {
-    data: ProductListItem[];
-    total: number;
-}
+export type ProductListResult = PaginatedResult<ProductListItem>;
 
 export interface CreateProductInput {
     name: string;
