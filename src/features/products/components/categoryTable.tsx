@@ -70,7 +70,7 @@ export function CategoryTable() {
     });
 
     return (
-        <Stack gap="md" px="xl">
+        <Stack gap="md" p="xl">
             <Group justify="space-between" align="flex-start">
                 <div>
                     <Title order={2}>Kelola Kategori</Title>

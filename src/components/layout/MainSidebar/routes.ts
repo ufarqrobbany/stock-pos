@@ -1,4 +1,4 @@
-import { IconBox, IconDashboard, IconReceipt, IconShoppingCart, IconUsers } from '@tabler/icons-react';
+import { IconBasket, IconBox, IconDashboard, IconReceipt, IconShoppingCart, IconUsers } from '@tabler/icons-react';
 import type { UserRole } from '@/db/types/user';
 
 export interface SidebarSubItem {
@@ -42,6 +42,29 @@ export const sidebarRoutes: SidebarRouteItem[] = [
             {
                 label: 'Kategori Produk',
                 link: '/products/categories',
+                allowedRoles: ['OWNER', 'INVENTORY'],
+            },
+        ],
+    },
+    {
+        label: 'Inventory',
+
+        icon: IconBasket,
+        allowedRoles: ['OWNER', 'INVENTORY'],
+        children: [
+            {
+                label: 'Stock In',
+                link: '/inventory/stockIn',
+                allowedRoles: ['OWNER', 'INVENTORY'],
+            },
+            {
+                label: 'Stock Opname',
+                link: '/inventory/stockOpname',
+                allowedRoles: ['OWNER', 'INVENTORY'],
+            },
+            {
+                label: 'History',
+                link: '/inventory/history',
                 allowedRoles: ['OWNER', 'INVENTORY'],
             },
         ],
