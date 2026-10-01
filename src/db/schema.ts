@@ -1,5 +1,5 @@
 export const schemaV1 = {
-    users: 'id, &username, role, createdAt',
+    users: 'id, &username, name, role, createdAt, [role+username], [role+name], [role+createdAt]',
     categories: 'id, parentId',
     products: 'id, categoryId, sku, createdAt',
     productVariants: 'id, productId, &sku',
