@@ -1,10 +1,15 @@
 import { Button, Group, Stack, Text, Title } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { RoleWrapper } from '@/features/auth/components/RoleWrapper';
 import { ProductTable } from '@/features/products/components/productTable';
 import { parseSessionCookie } from '@/utils/session';
+
+export const metadata: Metadata = {
+    title: 'Daftar Produk',
+};
 
 export default async function ProductsPage() {
     const cookieStore = await cookies();

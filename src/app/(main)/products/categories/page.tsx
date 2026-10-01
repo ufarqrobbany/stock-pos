@@ -1,7 +1,12 @@
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { RoleWrapper } from '@/features/auth/components/RoleWrapper';
 import { CategoryTable } from '@/features/products/components/categoryTable';
 import { parseSessionCookie } from '@/utils/session';
+
+export const metadata: Metadata = {
+    title: 'Kategori Produk',
+};
 
 export default async function CategoriesPage() {
     const cookieStore = await cookies();
