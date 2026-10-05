@@ -1,7 +1,13 @@
 import { db } from '@/db';
-import { type CreateStockEntryInput, stockEntryRepository } from '@/db/repositories/stockRepository';
+import {
+    type CreateStockEntryInput,
+    type StockAdjustmentInput,
+    stockAdjustmentRepository,
+    stockEntryRepository,
+} from '@/db/repositories/stockRepository';
 import { notifyError, notifySuccess } from '@/utils/notifications';
 import type { StockInItem } from '../stockInTable';
+import type { StockOpnameItem } from '../stockOpnameTable';
 
 export const stockService = {
     async createStockEntry(input: CreateStockEntryInput): Promise<boolean> {
@@ -35,6 +41,48 @@ export const stockService = {
                 supplier: entry.supplier,
                 totalItems: entry.quantity,
                 date: entry.receivedAt.slice(0, 10),
+            };
+        });
+    },
+};
+
+export const stockOpnameService = {
+    async createStockAdjustment(input: StockAdjustmentInput): Promise<boolean> {
+        const result = await stockAdjustmentRepository.createStockAdjustmentInput(input);
+        if (!result.success) {
+            notifyError({ title: 'Gagal mencatat penyesuaian stok.', message: result.message });
+            return false;
+        }
+
+        notifySuccess({ title: 'Berhasil', message: result.message });
+        return true;
+    },
+
+    async loadStockOpnameList(): Promise<StockOpnameItem[]> {
+        const [adjustmentsRes, products] = await Promise.all([
+            stockAdjustmentRepository.loadStockAdjustments(),
+            db.products.toArray(),
+        ]);
+
+        if (!adjustmentsRes.success || !adjustmentsRes.data) {
+            notifyError({ title: 'Gagal', message: 'Gagal memuat data Stock Opname.' });
+            return [];
+        }
+
+        return adjustmentsRes.data.map((adj) => {
+            const product = products.find((p) => p.id === adj.productId);
+            const dateStr = adj.createdAt.slice(0, 10).replace(/-/g, '');
+            const shortId = adj.id.slice(0, 4).toUpperCase();
+
+            return {
+                id: adj.id,
+                refNo: `SO-${dateStr}${shortId}`,
+                // sku: product?.sku ?? '-',
+                productName: product?.name ?? 'Produk tidak ditemukan',
+                type: adj.type,
+                quantityChange: adj.quantityChange,
+                reason: adj.reason,
+                date: adj.createdAt.slice(0, 10),
             };
         });
     },
