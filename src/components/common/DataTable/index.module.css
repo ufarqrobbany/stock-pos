@@ -1,0 +1,35 @@
+.th {
+    font-weight: 600;
+    border-bottom: 1px solid var(--mantine-color-surface-2);
+}
+
+.sortButton {
+    width: 100%;
+}
+
+.sortIcon {
+    opacity: 0;
+    transition: opacity 150ms ease;
+    color: var(--mantine-color-neutral-4);
+}
+
+.sortButton:hover .sortIcon {
+    opacity: 1;
+}
+
+.sortIcon[data-sorted='true'] {
+    opacity: 1;
+    color: var(--mantine-color-primary-6);
+}
+
+.bodyRow td {
+    border-bottom: none;
+}
+
+.bodyRow:hover {
+    background-color: var(--mantine-color-surface-1);
+}
+
+.stripedRow {
+    background-color: var(--mantine-color-surface-0);
+}

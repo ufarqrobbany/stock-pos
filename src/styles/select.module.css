@@ -1,0 +1,17 @@
+.option {
+    font-size: var(--mantine-font-size-sm);
+}
+
+.option[data-checked="true"] svg {
+    display: none;
+}
+
+.option[data-checked="true"] {
+    background-color: var(--mantine-color-primary-0);
+    color: var(--mantine-color-primary-7);
+    font-weight: var(--mantine-font-weight-medium);
+}
+
+.option[data-checked="true"]:hover {
+    background-color: var(--mantine-color-primary-1);
+}

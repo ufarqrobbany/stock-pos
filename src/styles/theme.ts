@@ -1,6 +1,8 @@
 import { createTheme, type MantineColorsTuple } from '@mantine/core';
 import { Outfit } from 'next/font/google';
 import inputClasses from './input.module.css';
+import paginationClasses from './pagination.module.css';
+import selectClasses from './select.module.css';
 
 export const fontOutfit = Outfit({
     subsets: ['latin'],
@@ -105,6 +107,17 @@ export const theme = createTheme({
                 input: inputClasses.input,
                 section: inputClasses.section,
                 visibilityToggle: inputClasses.visibilityToggle,
+            },
+        },
+        Select: {
+            classNames: {
+                option: selectClasses.option,
+            },
+        },
+        Pagination: {
+            classNames: {
+                control: paginationClasses.control,
+                dots: paginationClasses.dots,
             },
         },
     },
