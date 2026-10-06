@@ -15,6 +15,8 @@ export interface StockEntry {
     variantId: string | null;
     quantity: number;
     unitCost: number;
+    supplier: string;
+    refNo: string;
     source: string;
     receivedAt: string;
     createdBy: string;
