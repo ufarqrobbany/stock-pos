@@ -55,7 +55,7 @@ export function StockInTable() {
 
         const success = await stockService.createStockEntry({
             productId: values.productId as string,
-            variantId: null,
+            variantId: values.variantId ?? null,
             quantity: typeof values.quantity === 'number' ? values.quantity : 0,
             unitCost: typeof values.unitCost === 'number' ? values.unitCost : 0,
             supplier: values.supplier.trim(),
