@@ -8,6 +8,7 @@ import { productService } from '@/features/products/services/productService';
 
 export interface StockInFormValues {
     productId: string | null;
+    variantId: string | null;
     quantity: number | string;
     unitCost: number | string;
     supplier: string;
@@ -23,6 +24,7 @@ interface StockInFormProps {
 
 const defaultValues: StockInFormValues = {
     productId: null,
+    variantId: null,
     quantity: '',
     unitCost: '',
     supplier: '',
@@ -42,11 +44,28 @@ export function StockInForm({ onSubmit, loading = false, onCancel }: StockInForm
         initialValues: defaultValues,
         validate: {
             productId: (value) => (value ? null : 'Produk wajib dipilih.'),
+            variantId: (value, values) => {
+                const selectedProduct = products.find((p) => p.id === values.productId);
+                const hasVariants = (selectedProduct?.variants?.length ?? 0) > 0;
+                if (hasVariants && !value) {
+                    return 'Varian wajib dipilih untuk produk ini.';
+                }
+                return null;
+            },
             quantity: (value) => (typeof value === 'number' && value > 0 ? null : 'Jumlah wajib diisi, minimal 1.'),
             unitCost: (value) => (typeof value === 'number' && value >= 0 ? null : 'Harga beli wajib diisi.'),
             supplier: (value) => (value.trim() ? null : 'Nama supplier wajib diisi.'),
         },
     });
+
+    const selectedProduct = products.find((p) => p.id === form.values.productId);
+    const variants = selectedProduct?.variants ?? [];
+    const hasVariants = variants.length > 0;
+
+    const handleProductChange = (productId: string | null) => {
+        form.setFieldValue('productId', productId);
+        form.setFieldValue('variantId', null); // reset pilihan varian tiap ganti produk
+    };
 
     return (
         <form onSubmit={form.onSubmit((values) => onSubmit(values))}>
@@ -56,10 +75,26 @@ export function StockInForm({ onSubmit, loading = false, onCancel }: StockInForm
                     placeholder="Pilih produk"
                     data={products.map((p) => ({ value: p.id, label: p.name }))}
                     searchable
-                    key={form.key('productId')}
-                    {...form.getInputProps('productId')}
+                    value={form.values.productId}
+                    onChange={handleProductChange}
+                    error={form.errors.productId}
                     required
                 />
+
+                {hasVariants && (
+                    <Select
+                        label="Varian"
+                        placeholder="Pilih varian"
+                        data={variants.map((v) => ({
+                            value: v.id,
+                            label: `${v.name} · ${v.sku}`,
+                        }))}
+                        searchable
+                        key={form.key('variantId')}
+                        {...form.getInputProps('variantId')}
+                        required
+                    />
+                )}
 
                 <Group grow>
                     <NumberInput
