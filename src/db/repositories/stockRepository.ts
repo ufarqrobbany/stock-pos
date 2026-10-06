@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import type { Result } from '@/types/common';
-import type { StockAdjustment, StockAdjustmentType, StockEntry } from '../types/stock';
+import type { StockAdjustment, StockAdjustmentType, StockEntry, StockHistory } from '../types/stock';
 
 export interface CreateStockEntryInput {
     productId: string;
@@ -153,5 +153,12 @@ export const stockAdjustmentRepository = {
     async loadStockAdjustments(): Promise<Result<StockAdjustment[]>> {
         const adjustments = await db.stockAdjustments.orderBy('createdAt').reverse().toArray();
         return { success: true, data: adjustments };
+    },
+};
+
+export const stockHistoryRepository = {
+    async loadStockHistories(): Promise<Result<StockHistory[]>> {
+        const histories = await db.stockHistories.orderBy('createdAt').reverse().toArray();
+        return { success: true, data: histories };
     },
 };

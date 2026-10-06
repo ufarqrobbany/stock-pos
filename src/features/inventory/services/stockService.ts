@@ -4,12 +4,24 @@ import {
     type StockAdjustmentInput,
     stockAdjustmentRepository,
     stockEntryRepository,
+    stockHistoryRepository,
 } from '@/db/repositories/stockRepository';
 import { notifyError, notifySuccess } from '@/utils/notifications';
 import type { StockInItem } from '../stockInTable';
 import type { StockOpnameItem } from '../stockOpnameTable';
 
+export type StockHistoryItem = {
+    id: string;
+    productName: string;
+    referenceType: 'STOCK_ENTRY' | 'STOCK_ADJUSTMENT' | 'SALE';
+    before: number;
+    change: number;
+    after: number;
+    date: string;
+};
+
 export const stockService = {
+    // STOCK IN
     async createStockEntry(input: CreateStockEntryInput): Promise<boolean> {
         const result = await stockEntryRepository.createStockIn(input);
         if (!result.success) {
@@ -46,6 +58,7 @@ export const stockService = {
     },
 };
 
+// STOCK OPNAME
 export const stockOpnameService = {
     async createStockAdjustment(input: StockAdjustmentInput): Promise<boolean> {
         const result = await stockAdjustmentRepository.createStockAdjustmentInput(input);
@@ -83,6 +96,39 @@ export const stockOpnameService = {
                 quantityChange: adj.quantityChange,
                 reason: adj.reason,
                 date: adj.createdAt.slice(0, 10),
+            };
+        });
+    },
+};
+
+// STOCK HISTORY
+export const stockHistoryService = {
+    async loadStockHistoryList(): Promise<StockHistoryItem[]> {
+        const [historiesRes, products] = await Promise.all([
+            stockHistoryRepository.loadStockHistories(),
+            db.products.toArray(),
+        ]);
+
+        if (!historiesRes.success || !historiesRes.data) {
+            notifyError({ title: 'Gagal', message: 'Gagal memuat riwayat stok.' });
+            return [];
+        }
+
+        return historiesRes.data.map((history) => {
+            const product = products.find((p) => p.id === history.productId);
+            const change = history.balance - history.before;
+
+            const dateObj = new Date(history.createdAt);
+            const formattedDate = dateObj.toLocaleString('sv-SE').replace('T', ' ');
+
+            return {
+                id: history.id,
+                productName: product?.name ?? 'Produk tidak ditemukan',
+                referenceType: history.referenceType,
+                before: history.before,
+                change,
+                after: history.balance,
+                date: formattedDate,
             };
         });
     },
