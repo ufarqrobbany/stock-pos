@@ -1,51 +1,33 @@
 'use client';
 
-import { Card, Group } from '@mantine/core';
-// import { IconSearch } from '@tabler/icons-react';
-// import { useState } from 'react';
-// import { DataTable } from '@/components/common/DataTable';
-// import type { User } from '@/db/types/user';
+import { Card } from '@mantine/core';
+import { DataTable } from '@/components/common/DataTable';
+import { useUserContext } from '../hooks/useUserContext';
+import { createUserColumns } from './UserColumns';
 
 export function UserTable() {
-    // const [users] = useState<User[]>([]);
-    // const [search, setSearch] = useState('');
-    // const [roleFilter, setRoleFilter] = useState<string | null>(null);
-    // const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'username'>('createdAt');
-    // const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const { users, isLoading, sort, pagination, currentUserId, openEditModal, handleDeleteUser } = useUserContext();
+
+    const columns = createUserColumns({
+        currentUserId,
+        onEdit: openEditModal,
+        onDelete: handleDeleteUser,
+    });
 
     return (
-        <Card withBorder p="md" radius="sm">
-            <Group justify="space-between" align="center" mb="md" wrap="wrap" gap="sm">
-                <Group align="center" gap="sm" wrap="wrap">
-                    {/* <TextInput
-                        w={260}
-                        placeholder="Cari nama atau username..."
-                        leftSection={<IconSearch size={16} />}
-                        value={search}
-                        onChange={(e) => setSearch(e.currentTarget.value)}
-                    />
-
-                    <Select
-                        w={180}
-                        placeholder="Semua Peran"
-                        clearable
-                        data={}
-                        value={roleFilter}
-                        onChange={setRoleFilter}
-                    /> */}
-                </Group>
-            </Group>
-
-            {/* <DataTable
+        <Card withBorder p="md" shadow="none">
+            <DataTable
                 columns={columns}
-                data={}
+                data={users}
+                loading={isLoading}
                 getRowKey={(user) => user.id}
-                sortBy={sortBy}
-                sortDirection={sortDirection}
-                onSort={handleSort}
+                sortBy={sort.sortBy}
+                sortDirection={sort.sortDirection}
+                onSort={sort.onSort}
                 minWidth={750}
-                emptyText="Pengguna tidak ditemukan."
-            /> */}
+                emptyText="Pengguna tidak ditemukan"
+                pagination={pagination}
+            />
         </Card>
     );
 }
