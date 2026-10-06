@@ -4,7 +4,7 @@ import { ActionIcon, Badge, Button, Card, Group, Modal, Stack, Text, TextInput, 
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconSearch, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { type Column, DataTable } from '@/components/common/DataTable';
+import { DataTable } from '@/components/common/DataTable';
 import { StockInForm, type StockInFormValues } from './components/stockInForm';
 import { stockService } from './services/stockService';
 
@@ -17,12 +17,12 @@ export type StockInItem = {
     date: string;
 };
 
-const columns: Column<StockInItem>[] = [
-    { id: 'refNo', label: 'No. Referensi', render: (row) => row.refNo },
-    { id: 'productName', label: 'Nama Produk', render: (row) => row.productName },
-    { id: 'supplier', label: 'Pemasok / Supplier', render: (row) => row.supplier },
-    { id: 'totalItems', label: 'Total Item', render: (row) => row.totalItems },
-    { id: 'date', label: 'Tanggal Masuk', render: (row) => row.date },
+const columns = [
+    { id: 'refNo', label: 'No. Referensi', render: (row: StockInItem) => row.refNo },
+    { id: 'productName', label: 'Nama Produk', render: (row: StockInItem) => row.productName },
+    { id: 'supplier', label: 'Pemasok / Supplier', render: (row: StockInItem) => row.supplier },
+    { id: 'totalItems', label: 'Total Item', render: (row: StockInItem) => row.totalItems },
+    { id: 'date', label: 'Tanggal Masuk', render: (row: StockInItem) => row.date },
 ];
 
 export function StockInTable() {

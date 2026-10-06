@@ -4,7 +4,7 @@ import { ActionIcon, Badge, Button, Card, Group, Modal, Select, Stack, Text, Tex
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconSearch, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { type Column, DataTable } from '@/components/common/DataTable';
+import { DataTable } from '@/components/common/DataTable';
 import type { StockAdjustmentType } from '@/db/types/stock';
 import { StockOpnameForm, type StockOpnameFormValues } from './components/stockOpnameForm';
 import { stockOpnameService } from './services/stockService';
@@ -27,14 +27,14 @@ const typeBadgeMap: Record<StockAdjustmentType, { label: string; color: string }
     OTHER: { label: 'LAINNYA', color: 'gray' },
 };
 
-const columns: Column<StockOpnameItem>[] = [
-    { id: 'refNo', label: 'No. Referensi', render: (row) => row.refNo },
-    // { id: 'sku', label: 'SKU', render: (row) => row.sku },
-    { id: 'productName', label: 'Nama Produk', render: (row) => row.productName },
+const columns = [
+    { id: 'refNo', label: 'No. Referensi', render: (row: StockOpnameItem) => row.refNo },
+    // { id: 'sku', label: 'SKU', render: (row: StockOpnameItem) => row.sku },
+    { id: 'productName', label: 'Nama Produk', render: (row: StockOpnameItem) => row.productName },
     {
         id: 'type',
         label: 'Tipe Penyesuaian',
-        render: (row) => {
+        render: (row: StockOpnameItem) => {
             const config = typeBadgeMap[row.type] ?? { label: row.type, color: 'gray' };
             return (
                 <Badge color={config.color} variant="light">
@@ -46,14 +46,14 @@ const columns: Column<StockOpnameItem>[] = [
     {
         id: 'quantityChange',
         label: 'Jumlah Perubahan',
-        render: (row) => (
+        render: (row: StockOpnameItem) => (
             <Text fw={600} c={row.quantityChange > 0 ? 'green' : 'red'}>
                 {row.quantityChange > 0 ? `+${row.quantityChange}` : row.quantityChange}
             </Text>
         ),
     },
-    { id: 'reason', label: 'Alasan / Catatan', render: (row) => row.reason },
-    { id: 'date', label: 'Tanggal Penyesuaian', render: (row) => row.date },
+    { id: 'reason', label: 'Alasan / Catatan', render: (row: StockOpnameItem) => row.reason },
+    { id: 'date', label: 'Tanggal Penyesuaian', render: (row: StockOpnameItem) => row.date },
 ];
 
 export function StockOpnameTable() {

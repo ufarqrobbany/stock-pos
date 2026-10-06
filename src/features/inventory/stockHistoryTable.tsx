@@ -3,7 +3,7 @@
 import { ActionIcon, Badge, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { type Column, DataTable } from '@/components/common/DataTable';
+import { DataTable } from '@/components/common/DataTable';
 import { type StockHistoryItem, stockHistoryService } from './services/stockService';
 
 const refTypeBadgeMap: Record<StockHistoryItem['referenceType'], { label: string; color: string }> = {
@@ -12,13 +12,13 @@ const refTypeBadgeMap: Record<StockHistoryItem['referenceType'], { label: string
     SALE: { label: 'PENJUALAN', color: 'blue' },
 };
 
-const columns: Column<StockHistoryItem>[] = [
-    { id: 'date', label: 'Waktu Transaksi', render: (row) => row.date },
-    { id: 'productName', label: 'Nama Produk', render: (row) => row.productName },
+const columns = [
+    { id: 'date', label: 'Waktu Transaksi', render: (row: StockHistoryItem) => row.date },
+    { id: 'productName', label: 'Nama Produk', render: (row: StockHistoryItem) => row.productName },
     {
         id: 'referenceType',
         label: 'Sumber Mutasi',
-        render: (row) => {
+        render: (row: StockHistoryItem) => {
             const config = refTypeBadgeMap[row.referenceType] ?? { label: row.referenceType, color: 'gray' };
             return (
                 <Badge color={config.color} variant="light">
@@ -27,17 +27,17 @@ const columns: Column<StockHistoryItem>[] = [
             );
         },
     },
-    { id: 'before', label: 'Stok Awal', render: (row) => row.before },
+    { id: 'before', label: 'Stok Awal', render: (row: StockHistoryItem) => row.before },
     {
         id: 'change',
         label: 'Perubahan',
-        render: (row) => (
+        render: (row: StockHistoryItem) => (
             <Text fw={600} c={row.change > 0 ? 'green' : row.change < 0 ? 'red' : 'gray'}>
                 {row.change > 0 ? `+${row.change}` : row.change}
             </Text>
         ),
     },
-    { id: 'after', label: 'Stok Akhir', render: (row) => row.after },
+    { id: 'after', label: 'Stok Akhir', render: (row: StockHistoryItem) => row.after },
 ];
 
 export function StockHistoryTable() {
