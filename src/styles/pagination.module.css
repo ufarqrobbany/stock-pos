@@ -1,0 +1,52 @@
+.control {
+  border: none;
+  color: var(--mantine-color-neutral-4);
+
+  &:hover {
+    background-color: transparent;
+    color: var(--mantine-color-neutral-7);
+  }
+
+  &[data-active] {
+    background-color: transparent;
+    color: var(--mantine-color-primary-6);
+    font-weight: 600;
+  }
+}
+
+.control:first-child {
+  margin-right: 8px;
+  border: 1px solid var(--mantine-color-surface-2);
+  color: var(--mantine-color-primary-6);
+
+  &:hover {
+    background-color: var(--mantine-color-surface-0);
+  }
+
+  &[data-disabled] {
+    border-color: var(--mantine-color-surface-1);
+    color: var(--mantine-color-neutral-3);
+    opacity: 0.5;
+  }
+}
+
+.control:last-child {
+  margin-left: 8px;
+  border: 1px solid var(--mantine-color-surface-2);
+  color: var(--mantine-color-primary-6);
+
+  &:hover {
+    background-color: var(--mantine-color-surface-0);
+  }
+
+  &[data-disabled] {
+    border-color: var(--mantine-color-surface-1);
+    color: var(--mantine-color-neutral-3);
+    opacity: 0.5;
+  }
+}
+
+.dots {
+  border: none;
+  color: var(--mantine-color-neutral-4);
+}

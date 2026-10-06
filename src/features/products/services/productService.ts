@@ -1,9 +1,29 @@
 import { productRepository } from '@/db/repositories/productRepository';
 import type { ProductVariant } from '@/db/types/product';
-import type { CreateProductInput, CreateProductVariantInput } from '@/features/products/productData';
+import type {
+    CreateProductInput,
+    CreateProductVariantInput,
+    ProductListResult,
+    ProductQuery,
+} from '@/features/products/types';
 import { notifyError, notifySuccess } from '@/utils/notifications';
 
 export const productService = {
+    async loadProducts(query: ProductQuery = {}): Promise<ProductListResult> {
+        const result = await productRepository.loadProducts(query);
+        if (!result.success || !result.data) {
+            notifyError({ title: 'Gagal', message: 'Gagal memuat daftar produk.' });
+            return {
+                items: [],
+                total: 0,
+                page: 1,
+                pageSize: 10,
+                totalPages: 1,
+            };
+        }
+        return result.data;
+    },
+
     async createProductWithVariants(
         productInput: CreateProductInput,
         variantInput: Omit<CreateProductVariantInput, 'productId'>[]

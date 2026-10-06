@@ -14,8 +14,17 @@ export function SidebarItem({
 }) {
     const Icon = item.icon;
     const hasChildren = Boolean(item.children?.length);
-    const isChildActive = Boolean(item.children?.some((child) => pathname.startsWith(child.link)));
-    const isActive = item.link ? pathname.startsWith(item.link) : isChildActive;
+
+    const checkIsActive = (link: string) => {
+        if (pathname === link) return true;
+        if (pathname.startsWith(`${link}/`)) {
+            return !item.children?.some((child) => child.link !== link && pathname.startsWith(child.link));
+        }
+        return false;
+    };
+
+    const isChildActive = Boolean(item.children?.some((child) => checkIsActive(child.link)));
+    const isActive = item.link ? checkIsActive(item.link) : isChildActive;
 
     if (isCompact) {
         if (!hasChildren) {
@@ -42,7 +51,7 @@ export function SidebarItem({
                 <Menu.Dropdown className={classes.compactDropdown}>
                     <Menu.Label c="neutral.4">{item.label}</Menu.Label>
                     {item.children?.map((child) => {
-                        const isSubActive = pathname.startsWith(child.link);
+                        const isSubActive = checkIsActive(child.link);
 
                         return (
                             <Menu.Item
@@ -76,7 +85,7 @@ export function SidebarItem({
                             component={Link}
                             href={child.link}
                             label={child.label}
-                            active={pathname.startsWith(child.link)}
+                            active={checkIsActive(child.link)}
                             className={classes.navLink}
                             styles={{
                                 label: { fontSize: '12px' },

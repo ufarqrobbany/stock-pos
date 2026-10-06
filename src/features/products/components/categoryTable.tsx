@@ -10,7 +10,7 @@ import { createCategoryColumns } from '@/features/products/categoryColumns';
 import { CategoryForm, type CategoryFormValues } from '@/features/products/components/categoryForm';
 import { categoryService } from '@/features/products/services/categoryService';
 
-export default function CategoriesPage() {
+export function CategoryTable() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [initialValues, setInitialValues] = useState<Partial<CategoryFormValues>>({});
@@ -45,7 +45,7 @@ export default function CategoriesPage() {
             : await categoryService.createCategory(values.name.trim(), values.parentId);
 
         setLoading(false);
-        if (!success) return; // notifikasi gagal sudah ditembak dari categoryService
+        if (!success) return;
 
         await refreshCategories();
         close();
@@ -70,7 +70,7 @@ export default function CategoriesPage() {
     });
 
     return (
-        <Stack gap="md">
+        <Stack gap="md" p="xl">
             <Group justify="space-between" align="flex-start">
                 <div>
                     <Title order={2}>Kelola Kategori</Title>
@@ -78,8 +78,7 @@ export default function CategoriesPage() {
                         Tambah dan kelola kategori produk.
                     </Text>
                 </div>
-
-                <Button leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
+                <Button color="primary" leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
                     Tambah Kategori
                 </Button>
             </Group>
