@@ -63,6 +63,9 @@ export function StockOpnameTable() {
     const [loading, setLoading] = useState(false);
     const [opened, { open, close }] = useDisclosure(false);
 
+    const [activePage, setPage] = useState(1);
+    const pageSize = 10;
+
     const refresh = useCallback(async () => {
         setData(await stockOpnameService.loadStockOpnameList());
     }, []);
@@ -85,23 +88,32 @@ export function StockOpnameTable() {
         });
     }, [data, search, selectedType]);
 
+    const paginatedData = useMemo(() => {
+        const start = (activePage - 1) * pageSize;
+        return filteredData.slice(start, start + pageSize);
+    }, [filteredData, activePage]);
+
     const handleSubmit = async (values: StockOpnameFormValues) => {
         setLoading(true);
+        try {
+            const success = await stockOpnameService.createStockAdjustment({
+                productId: values.productId as string,
+                variantId: null,
+                type: values.type,
+                quantityChange: typeof values.quantityChange === 'number' ? values.quantityChange : 0,
+                reason: values.reason.trim(),
+                createdBy: 'system',
+            });
 
-        const success = await stockOpnameService.createStockAdjustment({
-            productId: values.productId as string,
-            variantId: null,
-            type: values.type,
-            quantityChange: typeof values.quantityChange === 'number' ? values.quantityChange : 0,
-            reason: values.reason.trim(),
-            createdBy: 'system',
-        });
+            if (!success) return;
 
-        setLoading(false);
-        if (!success) return;
-
-        await refresh();
-        close();
+            await refresh();
+            close();
+        } catch (error) {
+            console.error('Gagal menyimpan stock opname:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -159,9 +171,16 @@ export function StockOpnameTable() {
 
                 <DataTable
                     columns={columns}
-                    data={filteredData}
+                    data={paginatedData}
                     getRowKey={(item) => item.id}
                     emptyText="Data penyesuaian stok tidak ditemukan."
+                    pagination={{
+                        page: activePage,
+                        pageSize: pageSize,
+                        total: filteredData.length,
+                        totalPages: Math.ceil(filteredData.length / pageSize),
+                        onPageChange: setPage,
+                    }}
                 />
             </Card>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar, Card, Group, Stack, Text } from '@mantine/core';
+import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import { useProductContext } from '../context/ProductContext';
 import type { ProductListItem } from '../types';
@@ -55,6 +56,14 @@ export function ProductTable() {
         expandedProductIds,
     } = useProductContext();
 
+    const [activePage, setPage] = useState(1);
+    const pageSize = 10;
+
+    const paginatedData = useMemo(() => {
+        const start = (activePage - 1) * pageSize;
+        return products.slice(start, start + pageSize);
+    }, [products, activePage]);
+
     const columns = createProductColumns({
         onEdit: handleEdit,
         onDelete: handleDelete,
@@ -66,7 +75,7 @@ export function ProductTable() {
         <Card withBorder p="md" shadow="none">
             <DataTable
                 columns={columns}
-                data={products}
+                data={paginatedData}
                 loading={loading}
                 getRowKey={(item) => item.id}
                 sortBy={sortBy}
@@ -76,6 +85,13 @@ export function ProductTable() {
                 emptyText="Produk tidak ditemukan."
                 expandedRowIds={expandedProductIds}
                 renderExpandedRow={renderExpandedProduct}
+                pagination={{
+                    page: activePage,
+                    pageSize: pageSize,
+                    total: products.length,
+                    totalPages: Math.ceil(products.length / pageSize),
+                    onPageChange: setPage,
+                }}
             />
         </Card>
     );
