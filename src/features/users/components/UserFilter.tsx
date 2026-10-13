@@ -3,7 +3,7 @@
 import { CloseButton, Flex, Group, Select, Text, TextInput } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
 import { ROLE_OPTIONS } from '../constants';
-import { useUserContext } from '../hooks/useUserContext';
+import { useUserContext } from '../context/UserContext';
 import type { UserRoleFilter } from '../types';
 
 export function UserFilter() {

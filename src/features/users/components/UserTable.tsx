@@ -2,7 +2,7 @@
 
 import { Card } from '@mantine/core';
 import { DataTable } from '@/components/common/DataTable';
-import { useUserContext } from '../hooks/useUserContext';
+import { useUserContext } from '../context/UserContext';
 import { createUserColumns } from './UserColumns';
 
 export function UserTable() {
