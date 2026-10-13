@@ -6,7 +6,7 @@ import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import type { Category } from '@/db/types/product';
-import { createCategoryColumns } from '@/features/products/categoryColumns';
+import { createCategoryColumns } from '@/features/products/components/categoryColumns';
 import { CategoryForm, type CategoryFormValues } from '@/features/products/components/categoryForm';
 import { categoryService } from '@/features/products/services/categoryService';
 

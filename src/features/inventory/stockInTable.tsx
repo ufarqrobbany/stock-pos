@@ -31,6 +31,9 @@ export function StockInTable() {
     const [loading, setLoading] = useState(false);
     const [opened, { open, close }] = useDisclosure(false);
 
+    const [activePage, setPage] = useState(1);
+    const pageSize = 10;
+
     const refresh = useCallback(async () => {
         setData(await stockService.loadStockInList());
     }, []);
@@ -50,25 +53,34 @@ export function StockInTable() {
         );
     }, [data, search]);
 
+    const paginatedData = useMemo(() => {
+        const start = (activePage - 1) * pageSize;
+        return filteredData.slice(start, start + pageSize);
+    }, [filteredData, activePage]);
+
     const handleSubmit = async (values: StockInFormValues) => {
         setLoading(true);
+        try {
+            const success = await stockService.createStockEntry({
+                productId: values.productId as string,
+                variantId: values.variantId ?? null,
+                quantity: typeof values.quantity === 'number' ? values.quantity : 0,
+                unitCost: typeof values.unitCost === 'number' ? values.unitCost : 0,
+                supplier: values.supplier.trim(),
+                source: values.source,
+                receivedAt: new Date(values.receivedAt).toISOString(),
+                createdBy: 'system',
+            });
 
-        const success = await stockService.createStockEntry({
-            productId: values.productId as string,
-            variantId: values.variantId ?? null,
-            quantity: typeof values.quantity === 'number' ? values.quantity : 0,
-            unitCost: typeof values.unitCost === 'number' ? values.unitCost : 0,
-            supplier: values.supplier.trim(),
-            source: values.source,
-            receivedAt: new Date(values.receivedAt).toISOString(),
-            createdBy: 'system',
-        });
+            if (!success) return;
 
-        setLoading(false);
-        if (!success) return;
-
-        await refresh();
-        close();
+            await refresh();
+            close();
+        } catch (error) {
+            console.error('Gagal menyimpan stock in:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -114,9 +126,16 @@ export function StockInTable() {
 
                 <DataTable
                     columns={columns}
-                    data={filteredData}
+                    data={paginatedData}
                     getRowKey={(item) => item.id}
                     emptyText="Data transaksi stok masuk tidak ditemukan."
+                    pagination={{
+                        page: activePage,
+                        pageSize: pageSize,
+                        total: filteredData.length,
+                        totalPages: Math.ceil(filteredData.length / pageSize),
+                        onPageChange: setPage,
+                    }}
                 />
             </Card>
 

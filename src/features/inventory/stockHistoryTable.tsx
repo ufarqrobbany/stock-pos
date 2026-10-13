@@ -45,6 +45,9 @@ export function StockHistoryTable() {
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
 
+    const [activePage, setPage] = useState(1);
+    const pageSize = 10;
+
     const refresh = useCallback(async () => {
         setData(await stockHistoryService.loadStockHistoryList());
     }, []);
@@ -61,6 +64,11 @@ export function StockHistoryTable() {
             return matchSearch && matchType;
         });
     }, [data, search, selectedType]);
+
+    const paginatedData = useMemo(() => {
+        const start = (activePage - 1) * pageSize;
+        return filteredData.slice(start, start + pageSize);
+    }, [filteredData, activePage]);
 
     return (
         <Stack gap="md" p="xl">
@@ -112,9 +120,16 @@ export function StockHistoryTable() {
 
                 <DataTable
                     columns={columns}
-                    data={filteredData}
+                    data={paginatedData}
                     getRowKey={(item) => item.id}
                     emptyText="Belum ada riwayat pergerakan stok."
+                    pagination={{
+                        page: activePage,
+                        pageSize: pageSize,
+                        total: filteredData.length,
+                        totalPages: Math.ceil(filteredData.length / pageSize),
+                        onPageChange: setPage,
+                    }}
                 />
             </Card>
         </Stack>
