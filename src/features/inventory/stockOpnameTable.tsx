@@ -1,56 +1,43 @@
 'use client';
 
-import { ActionIcon, Badge, Card, Group, Select, TextInput } from '@mantine/core';
-import { IconSearch, IconX } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
-import { type Column, DataTable } from '@/components/common/DataTable';
-
-export type AdjustmentType = 'DAMAGED' | 'LOST' | 'COUNT_DIFF';
+import { ActionIcon, Badge, Button, Card, Group, Modal, Select, Stack, Text, TextInput, Title } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { IconPlus, IconSearch, IconX } from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DataTable } from '@/components/common/DataTable';
+import type { StockAdjustmentType } from '@/db/types/stock';
+import { StockOpnameForm, type StockOpnameFormValues } from './components/stockOpnameForm';
+import { stockOpnameService } from './services/stockService';
 
 export type StockOpnameItem = {
     id: string;
     refNo: string;
-    sku: string;
+    // sku: string;
     productName: string;
-    type: AdjustmentType;
+    type: StockAdjustmentType;
     quantityChange: number;
-    notes: string;
+    reason: string;
     date: string;
 };
 
-interface StockOpnameTableProps {
-    data: StockOpnameItem[];
-}
-
-const TYPE_CONFIG: Record<AdjustmentType, { label: string; color: string }> = {
-    DAMAGED: { label: 'Rusak', color: 'red' },
-    LOST: { label: 'Hilang', color: 'orange' },
-    COUNT_DIFF: { label: 'Selisih Hitung', color: 'blue' },
+const typeBadgeMap: Record<StockAdjustmentType, { label: string; color: string }> = {
+    DAMAGED: { label: 'RUSAK', color: 'red' },
+    LOST: { label: 'HILANG', color: 'orange' },
+    CORRECTION: { label: 'SELISIH HITUNG', color: 'blue' },
+    OTHER: { label: 'LAINNYA', color: 'gray' },
 };
 
-const columns: Column<StockOpnameItem>[] = [
-    {
-        id: 'refNo',
-        label: 'No. Referensi',
-        render: (row) => row.refNo,
-    },
-    {
-        id: 'sku',
-        label: 'SKU',
-        render: (row) => row.sku,
-    },
-    {
-        id: 'productName',
-        label: 'Nama Produk',
-        render: (row) => row.productName,
-    },
+const columns = [
+    { id: 'refNo', label: 'No. Referensi', render: (row: StockOpnameItem) => row.refNo },
+    // { id: 'sku', label: 'SKU', render: (row: StockOpnameItem) => row.sku },
+    { id: 'productName', label: 'Nama Produk', render: (row: StockOpnameItem) => row.productName },
     {
         id: 'type',
         label: 'Tipe Penyesuaian',
-        render: (row) => {
-            const config = TYPE_CONFIG[row.type] || { label: row.type, color: 'gray' };
+        render: (row: StockOpnameItem) => {
+            const config = typeBadgeMap[row.type] ?? { label: row.type, color: 'gray' };
             return (
-                <Badge variant="light" color={config.color}>
+                <Badge color={config.color} variant="light">
                     {config.label}
                 </Badge>
             );
@@ -59,97 +46,128 @@ const columns: Column<StockOpnameItem>[] = [
     {
         id: 'quantityChange',
         label: 'Jumlah Perubahan',
-        render: (row) => {
-            const isNegative = row.quantityChange < 0;
-            return (
-                <Badge variant="subtle" color={isNegative ? 'red' : 'green'}>
-                    {row.quantityChange > 0 ? `+${row.quantityChange}` : row.quantityChange}
-                </Badge>
-            );
-        },
+        render: (row: StockOpnameItem) => (
+            <Text fw={600} c={row.quantityChange > 0 ? 'green' : 'red'}>
+                {row.quantityChange > 0 ? `+${row.quantityChange}` : row.quantityChange}
+            </Text>
+        ),
     },
-    {
-        id: 'notes',
-        label: 'Alasan / Catatan',
-        render: (row) => row.notes || '-',
-    },
-    {
-        id: 'date',
-        label: 'Tanggal Penyesuaian',
-        render: (row) => row.date,
-    },
+    { id: 'reason', label: 'Alasan / Catatan', render: (row: StockOpnameItem) => row.reason },
+    { id: 'date', label: 'Tanggal Penyesuaian', render: (row: StockOpnameItem) => row.date },
 ];
 
-export function StockOpnameTable({ data }: StockOpnameTableProps) {
+export function StockOpnameTable() {
+    const [data, setData] = useState<StockOpnameItem[]>([]);
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [opened, { open, close }] = useDisclosure(false);
+
+    const refresh = useCallback(async () => {
+        setData(await stockOpnameService.loadStockOpnameList());
+    }, []);
+
+    useEffect(() => {
+        void refresh();
+    }, [refresh]);
 
     const filteredData = useMemo(() => {
         return data.filter((item) => {
-            const query = search.toLowerCase();
-            const matchesSearch =
+            const matchSearch =
                 !search.trim() ||
-                item.refNo.toLowerCase().includes(query) ||
-                item.sku.toLowerCase().includes(query) ||
-                item.productName.toLowerCase().includes(query) ||
-                item.notes.toLowerCase().includes(query);
+                item.refNo.toLowerCase().includes(search.toLowerCase()) ||
+                // item.sku.toLowerCase().includes(search.toLowerCase()) ||
+                item.productName.toLowerCase().includes(search.toLowerCase());
 
-            const matchesType = !selectedType || item.type === selectedType;
+            const matchType = !selectedType || item.type === selectedType;
 
-            return matchesSearch && matchesType;
+            return matchSearch && matchType;
         });
     }, [data, search, selectedType]);
 
+    const handleSubmit = async (values: StockOpnameFormValues) => {
+        setLoading(true);
+
+        const success = await stockOpnameService.createStockAdjustment({
+            productId: values.productId as string,
+            variantId: null,
+            type: values.type,
+            quantityChange: typeof values.quantityChange === 'number' ? values.quantityChange : 0,
+            reason: values.reason.trim(),
+            createdBy: 'system',
+        });
+
+        setLoading(false);
+        if (!success) return;
+
+        await refresh();
+        close();
+    };
+
     return (
-        <Card withBorder p="md" radius="md">
-            <Group justify="space-between" align="center" mb="md">
-                <Group align="center" gap="sm">
-                    <TextInput
-                        w={300}
-                        placeholder="Cari SKU, Nama Produk, atau Ref..."
-                        leftSection={<IconSearch size={16} />}
-                        rightSection={
-                            search ? (
-                                <ActionIcon
-                                    variant="subtle"
-                                    color="neutral"
-                                    size="sm"
-                                    onClick={() => setSearch('')}
-                                    aria-label="Hapus pencarian"
-                                >
-                                    <IconX size={14} />
-                                </ActionIcon>
-                            ) : null
-                        }
-                        value={search}
-                        onChange={(e) => setSearch(e.currentTarget.value)}
-                    />
-
-                    <Select
-                        w={220}
-                        placeholder="Semua Tipe Penyesuaian"
-                        clearable
-                        data={[
-                            { value: 'DAMAGED', label: 'Rusak (Damaged)' },
-                            { value: 'LOST', label: 'Hilang (Lost)' },
-                            { value: 'COUNT_DIFF', label: 'Selisih Hitung (Count Diff)' },
-                        ]}
-                        value={selectedType}
-                        onChange={setSelectedType}
-                    />
-                </Group>
-
-                <Badge variant="light" color="primary">
-                    {filteredData.length} RECORD DITEMUKAN
-                </Badge>
+        <Stack gap="md" p="xl">
+            <Group justify="space-between" align="flex-start">
+                <div>
+                    <Title order={2}>Stock Opname (Penyesuaian Stok)</Title>
+                    <Text c="neutral.4" size="sm">
+                        Penyesuaian stok fisik di gudang dan stok sistem.
+                    </Text>
+                </div>
+                <Button color="orange" leftSection={<IconPlus size={16} />} onClick={open}>
+                    Buat Stock Opname
+                </Button>
             </Group>
 
-            <DataTable
-                columns={columns}
-                data={filteredData}
-                getRowKey={(item) => item.id}
-                emptyText="Data penyesuaian stok opname tidak ditemukan."
-            />
-        </Card>
+            <Card withBorder p="md" radius="md">
+                <Group justify="space-between" align="center" mb="md">
+                    <Group gap="xs">
+                        <TextInput
+                            w={300}
+                            placeholder="Cari SKU, Nama Produk, atau Ref..."
+                            leftSection={<IconSearch size={16} />}
+                            rightSection={
+                                search ? (
+                                    <ActionIcon
+                                        variant="subtle"
+                                        color="neutral"
+                                        size="sm"
+                                        onClick={() => setSearch('')}
+                                    >
+                                        <IconX size={14} />
+                                    </ActionIcon>
+                                ) : null
+                            }
+                            value={search}
+                            onChange={(e) => setSearch(e.currentTarget.value)}
+                        />
+                        <Select
+                            placeholder="Semua Tipe Penyesuaian"
+                            data={[
+                                { value: 'DAMAGED', label: 'RUSAK' },
+                                { value: 'LOST', label: 'HILANG' },
+                                { value: 'CORRECTION', label: 'SELISIH HITUNG' },
+                            ]}
+                            clearable
+                            value={selectedType}
+                            onChange={setSelectedType}
+                        />
+                    </Group>
+                    <Badge variant="light" color="orange">
+                        {filteredData.length} RECORD DITEMUKAN
+                    </Badge>
+                </Group>
+
+                <DataTable
+                    columns={columns}
+                    data={filteredData}
+                    getRowKey={(item) => item.id}
+                    emptyText="Data penyesuaian stok tidak ditemukan."
+                />
+            </Card>
+
+            <Modal opened={opened} onClose={close} title="Buat Stock Opname">
+                <StockOpnameForm onSubmit={handleSubmit} loading={loading} onCancel={close} />
+            </Modal>
+        </Stack>
     );
 }
