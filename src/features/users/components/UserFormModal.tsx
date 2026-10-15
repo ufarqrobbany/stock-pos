@@ -5,7 +5,7 @@ import { useForm } from '@mantine/form';
 import { zod4Resolver } from 'mantine-form-zod-resolver';
 import { useEffect } from 'react';
 import { USER_FORM_ROLE_OPTIONS } from '../constants';
-import { useUserContext } from '../hooks/useUserContext';
+import { useUserContext } from '../context/UserContext';
 import type { UserFormData } from '../schemas/userSchema';
 
 const defaultValues: UserFormData = {
