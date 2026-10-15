@@ -2,7 +2,7 @@
 
 import { Button, Group, Stack, Text, Title } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
-import { useUserContext } from '../hooks/useUserContext';
+import { useUserContext } from '../context/UserContext';
 import { UserFilter } from './UserFilter';
 import { UserFormModal } from './UserFormModal';
 import { UserTable } from './UserTable';

@@ -8,8 +8,8 @@ import { formatDate } from '@/utils/date';
 
 interface UserColumnsParams {
     currentUserId?: string;
-    onEdit?: (user: User) => void;
-    onDelete?: (user: User) => void;
+    onEdit: (user: User) => void;
+    onDelete: (user: User) => void;
 }
 
 export function createUserColumns({ currentUserId, onEdit, onDelete }: UserColumnsParams): Column<User>[] {
@@ -58,12 +58,10 @@ export function createUserColumns({ currentUserId, onEdit, onDelete }: UserColum
 
                 return (
                     <Group gap={6} justify="center" wrap="nowrap">
-                        {onEdit && (
-                            <ActionIcon variant="subtle" onClick={() => onEdit(user)}>
-                                <IconEdit size={16} />
-                            </ActionIcon>
-                        )}
-                        {onDelete && !isSelf && (
+                        <ActionIcon variant="subtle" onClick={() => onEdit(user)}>
+                            <IconEdit size={16} />
+                        </ActionIcon>
+                        {!isSelf && (
                             <ActionIcon variant="subtle" color="red" onClick={() => onDelete(user)}>
                                 <IconTrash size={16} />
                             </ActionIcon>

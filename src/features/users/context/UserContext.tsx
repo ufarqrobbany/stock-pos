@@ -1,13 +1,15 @@
 'use client';
 
 import { useDisclosure } from '@mantine/hooks';
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { useRouter } from 'next/dist/client/components/navigation';
+import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 import type { User, UserRole } from '@/db/types/user';
 import { userService } from '@/features/users/services/userService';
 import type { CreateUserInput, UpdateUserInput } from '@/features/users/types';
 import { confirmDelete } from '@/utils/confirmModal';
+import { setSessionCookie } from '@/utils/session';
+import { type UsersState, useUsers } from '../hooks/useUsers';
 import { createUserSchema, type UserFormData, updateUserSchema } from '../schemas/userSchema';
-import { type UsersState, useUsers } from './useUsers';
 
 interface UserContextValue extends UsersState {
     currentUserId?: string;
@@ -31,17 +33,14 @@ interface UserProviderProps {
 }
 
 export function UserProvider({ children, currentUserId }: UserProviderProps) {
+    const router = useRouter();
     const userState = useUsers();
     const [isModalOpen, { open: openModal, close: closeModal }] = useDisclosure(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isSelfEditing = useMemo(
-        () => Boolean(editingUser && editingUser.id === currentUserId),
-        [editingUser, currentUserId]
-    );
-
-    const formSchema = useMemo(() => (editingUser ? updateUserSchema : createUserSchema), [editingUser]);
+    const isSelfEditing = Boolean(editingUser && editingUser.id === currentUserId);
+    const formSchema = editingUser ? updateUserSchema : createUserSchema;
 
     const openCreateModal = useCallback(() => {
         setEditingUser(null);
@@ -92,6 +91,16 @@ export function UserProvider({ children, currentUserId }: UserProviderProps) {
                 : await userService.createUser(payload as CreateUserInput);
 
             if (success) {
+                if (isSelfEditing && editingUser) {
+                    await setSessionCookie({
+                        id: editingUser.id,
+                        name: payload.name ?? editingUser.name,
+                        username: payload.username ?? editingUser.username,
+                        role: payload.role ?? editingUser.role,
+                    });
+                    router.refresh();
+                }
+
                 closeModal();
                 await userState.refresh();
             }
