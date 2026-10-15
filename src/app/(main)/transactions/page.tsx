@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { RoleWrapper } from '@/features/auth/components/RoleWrapper';
 import { TransactionsTable } from '@/features/transactions/components/TransactionsTable';
-import { TransactionProvider } from '@/features/transactions/context/TransactionContext';
 import { parseSessionCookie } from '@/utils/session';
 
 export const metadata: Metadata = {
@@ -15,9 +14,7 @@ export default async function TransactionsPage() {
 
     return (
         <RoleWrapper allowedRoles={['OWNER', 'CASHIER']} user={user} type="page">
-            <TransactionProvider>
-                <TransactionsTable />
-            </TransactionProvider>
+            <TransactionsTable />
         </RoleWrapper>
     );
 }

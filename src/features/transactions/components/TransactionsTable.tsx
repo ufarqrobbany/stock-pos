@@ -2,20 +2,49 @@
 
 import { ActionIcon, Badge, Card, Group, Modal, Stack, Table, Text, TextInput, Title } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import { db } from '@/db';
 import type { SalesTransaction, SalesTransactionItem } from '@/db/types/sales';
-import { useTransactionContext } from '../context/TransactionContext';
+import { transactionService } from '../services/transactionService';
 import { createTransactionColumns } from './TransactionsColumns';
 
 export function TransactionsTable() {
-    const { transactions, isLoading, search, setSearch, pagination } = useTransactionContext();
+    const [transactions, setTransactions] = useState<SalesTransaction[]>([]);
+    const [search, setSearch] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    // State pagination langsung di dalam komponen
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     const [opened, setOpened] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<SalesTransaction | null>(null);
     const [transactionItems, setTransactionItems] = useState<SalesTransactionItem[]>([]);
     const [loadingItems, setLoadingItems] = useState(false);
+
+    const fetchTransactions = useCallback(async () => {
+        setIsLoading(true);
+        const result = await transactionService.getTransactions({ page, pageSize, search });
+        setTransactions(result.items);
+        setTotal(result.total);
+        setTotalPages(result.totalPages);
+        setIsLoading(false);
+    }, [page, pageSize, search]);
+
+    useEffect(() => {
+        void fetchTransactions();
+    }, [fetchTransactions]);
+
+    const pagination = {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        onPageChange: (newPage: number) => setPage(newPage),
+    };
 
     const handleViewItems = async (transaction: SalesTransaction) => {
         setSelectedTransaction(transaction);
@@ -50,16 +79,27 @@ export function TransactionsTable() {
                         leftSection={<IconSearch size={16} />}
                         rightSection={
                             search ? (
-                                <ActionIcon variant="subtle" color="neutral" size="sm" onClick={() => setSearch('')}>
+                                <ActionIcon
+                                    variant="subtle"
+                                    color="neutral"
+                                    size="sm"
+                                    onClick={() => {
+                                        setSearch('');
+                                        setPage(1);
+                                    }}
+                                >
                                     <IconX size={14} />
                                 </ActionIcon>
                             ) : null
                         }
                         value={search}
-                        onChange={(e) => setSearch(e.currentTarget.value)}
+                        onChange={(e) => {
+                            setSearch(e.currentTarget.value);
+                            setPage(1);
+                        }}
                     />
                     <Badge variant="light" color="blue">
-                        {pagination.total} TRANSAKSI DITEMUKAN
+                        {total} TRANSAKSI DITEMUKAN
                     </Badge>
                 </Group>
 
