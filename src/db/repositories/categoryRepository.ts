@@ -1,5 +1,4 @@
 import { db } from '@/db';
-import type {} from '@/features/products/productData';
 import type { Result } from '@/types/common';
 import type { Category } from '../types/product';
 

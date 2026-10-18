@@ -19,6 +19,7 @@ export interface ProductListVariant {
     sku: string;
     price: number;
     stock: number;
+    lowStockThreshold: number;
 }
 
 export interface ProductListItem {
@@ -31,6 +32,7 @@ export interface ProductListItem {
     skuCount: number;
     price: number | null;
     stock: number;
+    lowStockThreshold: number;
     isActive: boolean;
     variants: ProductListVariant[];
     image?: string | null;

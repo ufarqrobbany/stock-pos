@@ -30,13 +30,14 @@ function mapProductToListItem(
         stock: stockBalances
             .filter((balance) => balance.variantId === variant.id)
             .reduce((total, balance) => total + balance.quantity, 0),
+        lowStockThreshold: variant.lowStockThreshold ?? 0,
     }));
 
     return {
         id: product.id,
         name: product.name,
         description: product.description ?? '',
-        imageUrl: product.image ?? null,
+        imageUrl: product.image?.trim() ? product.image.trim() : null,
         categoryId: product.categoryId,
         categoryName: category?.name ?? 'Tanpa kategori',
         skuCount: product.hasVariants ? productVariants.length : product.sku ? 1 : 0,
@@ -46,6 +47,7 @@ function mapProductToListItem(
                 : null
             : (product.sellingPrice ?? null),
         stock: productStock,
+        lowStockThreshold: product.lowStockThreshold ?? 10,
         isActive: product.isActive,
         variants: productVariantItems,
     };
@@ -108,12 +110,22 @@ export const productRepository = {
         }
 
         const total = result.length;
-        const page = query.page && query.page > 0 ? query.page : 1;
-        const pageSize = query.pageSize && query.pageSize > 0 ? query.pageSize : 10;
-        const totalPages = Math.ceil(total / pageSize) || 1;
+        const isPaginated = typeof query.pageSize === 'number' && query.pageSize > 0;
 
-        const startIndex = (page - 1) * pageSize;
-        const items = result.slice(startIndex, startIndex + pageSize);
+        let items: ProductListItem[];
+        let page = 1;
+        let pageSize = total;
+        let totalPages = 1;
+
+        if (isPaginated) {
+            pageSize = query.pageSize as number;
+            page = query.page && query.page > 0 ? query.page : 1;
+            totalPages = Math.ceil(total / pageSize) || 1;
+            const startIndex = (page - 1) * pageSize;
+            items = result.slice(startIndex, startIndex + pageSize);
+        } else {
+            items = result;
+        }
 
         return {
             success: true,
@@ -297,5 +309,10 @@ export const productRepository = {
         });
 
         return { success: true, data: null, message: 'Varian product berhasil diperbarui.' };
+    },
+
+    async countActiveProducts(): Promise<Result<number>> {
+        const count = await db.products.filter((p) => p.isActive).count();
+        return { success: true, data: count };
     },
 };
