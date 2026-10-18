@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import type { Result } from '@/types/common';
+import type { PaginatedResult, Result } from '@/types/common';
 import type { StockAdjustment, StockAdjustmentType, StockEntry, StockHistory } from '../types/stock';
 
 export interface CreateStockEntryInput {
@@ -21,6 +21,13 @@ export interface StockAdjustmentInput {
     reason: string;
     note?: string | null;
     createdBy: string;
+}
+
+export interface StockQueryParams {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    type?: string;
 }
 
 function generateRefNo(prefix: 'IN' | 'SO', date: string): string {
@@ -87,9 +94,48 @@ export const stockEntryRepository = {
         return { success: true, data: entry, message: 'Stok masuk berhasil dicatat.' };
     },
 
-    async loadStockEntries(): Promise<Result<StockEntry[]>> {
-        const entries = await db.stockEntries.orderBy('receivedAt').reverse().toArray();
-        return { success: true, data: entries };
+    async getAll({ page = 1, pageSize = 10, search }: StockQueryParams): Promise<Result<PaginatedResult<StockEntry>>> {
+        try {
+            let collection = db.stockEntries.orderBy('receivedAt').reverse();
+
+            if (search?.trim()) {
+                const keyword = search.trim().toLowerCase();
+                const products = await db.products.toArray();
+                const productIds = new Set(
+                    products.filter((p) => p.name.toLowerCase().includes(keyword)).map((p) => p.id)
+                );
+
+                collection = collection.filter(
+                    (entry) =>
+                        entry.refNo.toLowerCase().includes(keyword) ||
+                        entry.supplier.toLowerCase().includes(keyword) ||
+                        productIds.has(entry.productId)
+                );
+            }
+
+            const total = await collection.count();
+            const items = await collection
+                .offset((page - 1) * pageSize)
+                .limit(pageSize)
+                .toArray();
+
+            return {
+                success: true,
+                data: {
+                    items,
+                    total,
+                    page,
+                    pageSize,
+                    totalPages: Math.ceil(total / pageSize) || 1,
+                },
+            };
+        } catch {
+            return {
+                success: false,
+                data: null,
+                message: 'Gagal mengambil data stok masuk dari database',
+            };
+        }
     },
 };
 
@@ -105,7 +151,7 @@ export const stockAdjustmentRepository = {
             reason: input.reason,
             note: input.note ?? null,
             createdBy: input.createdBy,
-            createdAt: new Date().toISOString(),
+            createdAt: now.toISOString(),
         };
 
         await db.transaction('rw', [db.stockAdjustments, db.stockBalances, db.stockHistories], async () => {
@@ -150,15 +196,107 @@ export const stockAdjustmentRepository = {
         return { success: true, data: adjustment, message: 'Penyesuaian stok berhasil dicatat.' };
     },
 
-    async loadStockAdjustments(): Promise<Result<StockAdjustment[]>> {
-        const adjustments = await db.stockAdjustments.orderBy('createdAt').reverse().toArray();
-        return { success: true, data: adjustments };
+    async getAll({
+        page = 1,
+        pageSize = 10,
+        search,
+        type,
+    }: StockQueryParams): Promise<Result<PaginatedResult<StockAdjustment>>> {
+        try {
+            let collection = db.stockAdjustments.orderBy('createdAt').reverse();
+
+            if (type) {
+                collection = collection.filter((adj) => adj.type === type);
+            }
+
+            if (search?.trim()) {
+                const keyword = search.trim().toLowerCase();
+                const products = await db.products.toArray();
+                const productIds = new Set(
+                    products.filter((p) => p.name.toLowerCase().includes(keyword)).map((p) => p.id)
+                );
+
+                collection = collection.filter((adj) => {
+                    const dateStr = adj.createdAt.slice(0, 10).replace(/-/g, '');
+                    const shortId = adj.id.slice(0, 4).toUpperCase();
+                    const refNo = `SO-${dateStr}${shortId}`.toLowerCase();
+
+                    return refNo.includes(keyword) || productIds.has(adj.productId);
+                });
+            }
+
+            const total = await collection.count();
+            const items = await collection
+                .offset((page - 1) * pageSize)
+                .limit(pageSize)
+                .toArray();
+
+            return {
+                success: true,
+                data: {
+                    items,
+                    total,
+                    page,
+                    pageSize,
+                    totalPages: Math.ceil(total / pageSize) || 1,
+                },
+            };
+        } catch {
+            return {
+                success: false,
+                data: null,
+                message: 'Gagal mengambil data stock opname dari database',
+            };
+        }
     },
 };
 
 export const stockHistoryRepository = {
-    async loadStockHistories(): Promise<Result<StockHistory[]>> {
-        const histories = await db.stockHistories.orderBy('createdAt').reverse().toArray();
-        return { success: true, data: histories };
+    async getAll({
+        page = 1,
+        pageSize = 10,
+        search,
+        type: referenceType,
+    }: StockQueryParams & { type?: string }): Promise<Result<PaginatedResult<StockHistory>>> {
+        try {
+            let collection = db.stockHistories.orderBy('createdAt').reverse();
+
+            if (referenceType) {
+                collection = collection.filter((h) => h.referenceType === referenceType);
+            }
+
+            if (search?.trim()) {
+                const keyword = search.trim().toLowerCase();
+                const products = await db.products.toArray();
+                const productIds = new Set(
+                    products.filter((p) => p.name.toLowerCase().includes(keyword)).map((p) => p.id)
+                );
+
+                collection = collection.filter((h) => productIds.has(h.productId));
+            }
+
+            const total = await collection.count();
+            const items = await collection
+                .offset((page - 1) * pageSize)
+                .limit(pageSize)
+                .toArray();
+
+            return {
+                success: true,
+                data: {
+                    items,
+                    total,
+                    page,
+                    pageSize,
+                    totalPages: Math.ceil(total / pageSize) || 1,
+                },
+            };
+        } catch {
+            return {
+                success: false,
+                data: null,
+                message: 'Gagal mengambil data riwayat stok dari database',
+            };
+        }
     },
 };

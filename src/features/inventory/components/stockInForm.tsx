@@ -3,8 +3,8 @@
 import { Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
-import type { ProductListItem } from '@/features/products/productData';
 import { productService } from '@/features/products/services/productService';
+import type { ProductListItem } from '@/features/products/types';
 
 export interface StockInFormValues {
     productId: string | null;

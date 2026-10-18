@@ -6,6 +6,8 @@ import {
     stockEntryRepository,
     stockHistoryRepository,
 } from '@/db/repositories/stockRepository';
+import type { StockAdjustment, StockEntry, StockHistory } from '@/db/types/stock';
+import type { PaginatedResult } from '@/types/common';
 import { notifyError, notifySuccess } from '@/utils/notifications';
 import type { StockInItem } from '../stockInTable';
 import type { StockOpnameItem } from '../stockOpnameTable';
@@ -21,7 +23,6 @@ export type StockHistoryItem = {
 };
 
 export const stockService = {
-    // STOCK IN
     async createStockEntry(input: CreateStockEntryInput): Promise<boolean> {
         const result = await stockEntryRepository.createStockIn(input);
         if (!result.success) {
@@ -33,18 +34,20 @@ export const stockService = {
         return true;
     },
 
-    async loadStockInList(): Promise<StockInItem[]> {
-        const [entriesRes, products] = await Promise.all([
-            stockEntryRepository.loadStockEntries(),
-            db.products.toArray(),
-        ]);
+    async loadStockInPaginated(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+    }): Promise<PaginatedResult<StockInItem>> {
+        const result = await stockEntryRepository.getAll(params);
+        const products = await db.products.toArray();
 
-        if (!entriesRes.success || !entriesRes.data) {
-            notifyError({ title: 'Gagal', message: 'Gagal memuat data stok masuk.' });
-            return [];
+        if (!result.success || !result.data) {
+            notifyError({ title: 'Gagal', message: result.message || 'Gagal memuat data stok masuk.' });
+            return { items: [], total: 0, page: params.page || 1, pageSize: params.pageSize || 10, totalPages: 1 };
         }
 
-        return entriesRes.data.map((entry) => {
+        const items = result.data.items.map((entry: StockEntry) => {
             const product = products.find((p) => p.id === entry.productId);
             return {
                 id: entry.id,
@@ -55,10 +58,17 @@ export const stockService = {
                 date: entry.receivedAt.slice(0, 10),
             };
         });
+
+        return {
+            items,
+            total: result.data.total,
+            page: result.data.page,
+            pageSize: result.data.pageSize,
+            totalPages: result.data.totalPages,
+        };
     },
 };
 
-// STOCK OPNAME
 export const stockOpnameService = {
     async createStockAdjustment(input: StockAdjustmentInput): Promise<boolean> {
         const result = await stockAdjustmentRepository.createStockAdjustmentInput(input);
@@ -71,18 +81,21 @@ export const stockOpnameService = {
         return true;
     },
 
-    async loadStockOpnameList(): Promise<StockOpnameItem[]> {
-        const [adjustmentsRes, products] = await Promise.all([
-            stockAdjustmentRepository.loadStockAdjustments(),
-            db.products.toArray(),
-        ]);
+    async loadStockOpnamePaginated(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        type?: string;
+    }): Promise<PaginatedResult<StockOpnameItem>> {
+        const result = await stockAdjustmentRepository.getAll(params);
+        const products = await db.products.toArray();
 
-        if (!adjustmentsRes.success || !adjustmentsRes.data) {
-            notifyError({ title: 'Gagal', message: 'Gagal memuat data Stock Opname.' });
-            return [];
+        if (!result.success || !result.data) {
+            notifyError({ title: 'Gagal', message: result.message || 'Gagal memuat data Stock Opname.' });
+            return { items: [], total: 0, page: params.page || 1, pageSize: params.pageSize || 10, totalPages: 1 };
         }
 
-        return adjustmentsRes.data.map((adj) => {
+        const items = result.data.items.map((adj: StockAdjustment) => {
             const product = products.find((p) => p.id === adj.productId);
             const dateStr = adj.createdAt.slice(0, 10).replace(/-/g, '');
             const shortId = adj.id.slice(0, 4).toUpperCase();
@@ -90,7 +103,6 @@ export const stockOpnameService = {
             return {
                 id: adj.id,
                 refNo: `SO-${dateStr}${shortId}`,
-                // sku: product?.sku ?? '-',
                 productName: product?.name ?? 'Produk tidak ditemukan',
                 type: adj.type,
                 quantityChange: adj.quantityChange,
@@ -98,26 +110,40 @@ export const stockOpnameService = {
                 date: adj.createdAt.slice(0, 10),
             };
         });
+
+        return {
+            items,
+            total: result.data.total,
+            page: result.data.page,
+            pageSize: result.data.pageSize,
+            totalPages: result.data.totalPages,
+        };
     },
 };
 
-// STOCK HISTORY
 export const stockHistoryService = {
-    async loadStockHistoryList(): Promise<StockHistoryItem[]> {
-        const [historiesRes, products] = await Promise.all([
-            stockHistoryRepository.loadStockHistories(),
-            db.products.toArray(),
-        ]);
+    async loadStockHistoryPaginated(params: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        referenceType?: string;
+    }): Promise<PaginatedResult<StockHistoryItem>> {
+        const result = await stockHistoryRepository.getAll({
+            page: params.page,
+            pageSize: params.pageSize,
+            search: params.search,
+            type: params.referenceType,
+        });
+        const products = await db.products.toArray();
 
-        if (!historiesRes.success || !historiesRes.data) {
-            notifyError({ title: 'Gagal', message: 'Gagal memuat riwayat stok.' });
-            return [];
+        if (!result.success || !result.data) {
+            notifyError({ title: 'Gagal', message: result.message || 'Gagal memuat riwayat stok.' });
+            return { items: [], total: 0, page: params.page || 1, pageSize: params.pageSize || 10, totalPages: 1 };
         }
 
-        return historiesRes.data.map((history) => {
+        const items = result.data.items.map((history: StockHistory) => {
             const product = products.find((p) => p.id === history.productId);
             const change = history.balance - history.before;
-
             const dateObj = new Date(history.createdAt);
             const formattedDate = dateObj.toLocaleString('sv-SE').replace('T', ' ');
 
@@ -131,5 +157,13 @@ export const stockHistoryService = {
                 date: formattedDate,
             };
         });
+
+        return {
+            items,
+            total: result.data.total,
+            page: result.data.page,
+            pageSize: result.data.pageSize,
+            totalPages: result.data.totalPages,
+        };
     },
 };

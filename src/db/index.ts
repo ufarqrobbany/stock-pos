@@ -19,6 +19,7 @@ export class StockPOSDatabase extends Dexie {
     stockHistories!: EntityTable<StockHistory, 'id'>;
     salesTransactions!: EntityTable<SalesTransaction, 'id'>;
     salesTransactionItems!: EntityTable<SalesTransactionItem, 'id'>;
+    sales: any;
 
     constructor() {
         super('StockPOSDatabase');

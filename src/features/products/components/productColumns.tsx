@@ -29,7 +29,7 @@ export function createProductColumns({
                         {isExpanded(product.id) ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
                     </ActionIcon>
 
-                    <Avatar src={product.image} alt={product.name} radius="md" size="lg" />
+                    <Avatar src={product.imageUrl} alt={product.name} radius="md" size="lg" />
 
                     <div>
                         <Text fw={600} fz={15}>
