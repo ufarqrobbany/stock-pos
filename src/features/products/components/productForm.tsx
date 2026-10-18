@@ -228,14 +228,7 @@ export function ProductForm({
                                     style={{ borderRadius: '6px' }}
                                 >
                                     <Group gap="xs">
-                                        <Image
-                                            src={form.values.image}
-                                            alt="Preview Produk"
-                                            w={40}
-                                            h={40}
-                                            radius="sm"
-                                            fallbackSrc="https://placehold.co/40x40?text=No+Image"
-                                        />
+                                        <Image src={form.values.image} alt="Preview Produk" w={40} h={40} radius="sm" />
                                         <Stack gap={0}>
                                             <Text size="xs" fw={600} c="green.7">
                                                 Foto Terpasang

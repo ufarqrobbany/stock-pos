@@ -20,17 +20,17 @@ export function createCategoryColumns({
         {
             id: 'name',
             label: 'Nama Kategori',
-            render: (category) => <Text size="sm">{category.name}</Text>,
+            render: (category: Category) => <Text size="sm">{category.name}</Text>,
         },
         {
             id: 'parent',
             label: 'Parent Kategori',
-            render: (category) => <Text size="sm">{getParentName(category.parentId)}</Text>,
+            render: (category: Category) => <Text size="sm">{getParentName(category.parentId)}</Text>,
         },
         {
             id: 'actions',
             label: 'Aksi',
-            render: (category) => (
+            render: (category: Category) => (
                 <Group gap="xs">
                     <ActionIcon
                         variant="subtle"

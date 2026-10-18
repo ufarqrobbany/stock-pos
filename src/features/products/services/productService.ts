@@ -96,4 +96,9 @@ export const productService = {
         notifySuccess({ title: 'Berhasil', message: result.message });
         return true;
     },
+
+    async countActiveProducts(): Promise<number> {
+        const result = await productRepository.countActiveProducts();
+        return result.success && typeof result.data === 'number' ? result.data : 0;
+    },
 };

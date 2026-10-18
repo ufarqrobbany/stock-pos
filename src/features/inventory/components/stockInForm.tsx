@@ -3,8 +3,8 @@
 import { Button, Group, NumberInput, Select, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
-import type { ProductListItem } from '@/features/products/productData';
 import { productService } from '@/features/products/services/productService';
+import type { ProductListItem, ProductListVariant } from '@/features/products/types';
 
 export interface StockInFormValues {
     productId: string | null;
@@ -85,7 +85,7 @@ export function StockInForm({ onSubmit, loading = false, onCancel }: StockInForm
                     <Select
                         label="Varian"
                         placeholder="Pilih varian"
-                        data={variants.map((v) => ({
+                        data={variants.map((v: ProductListVariant) => ({
                             value: v.id,
                             label: `${v.name} · ${v.sku}`,
                         }))}
