@@ -3,7 +3,7 @@
 import { ActionIcon, Badge, Button, Card, Group, Modal, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconSearch, IconX } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import type { StockAdjustmentType } from '@/db/types/stock';
 import { StockOpnameForm, type StockOpnameFormValues } from './components/stockOpnameForm';
@@ -12,7 +12,6 @@ import { stockOpnameService } from './services/stockService';
 export type StockOpnameItem = {
     id: string;
     refNo: string;
-    // sku: string;
     productName: string;
     type: StockAdjustmentType;
     quantityChange: number;
@@ -29,7 +28,6 @@ const typeBadgeMap: Record<StockAdjustmentType, { label: string; color: string }
 
 const columns = [
     { id: 'refNo', label: 'No. Referensi', render: (row: StockOpnameItem) => row.refNo },
-    // { id: 'sku', label: 'SKU', render: (row: StockOpnameItem) => row.sku },
     { id: 'productName', label: 'Nama Produk', render: (row: StockOpnameItem) => row.productName },
     {
         id: 'type',
@@ -63,35 +61,36 @@ export function StockOpnameTable() {
     const [loading, setLoading] = useState(false);
     const [opened, { open, close }] = useDisclosure(false);
 
-    const [activePage, setPage] = useState(1);
-    const pageSize = 10;
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     const refresh = useCallback(async () => {
-        setData(await stockOpnameService.loadStockOpnameList());
-    }, []);
+        setLoading(true);
+        const result = await stockOpnameService.loadStockOpnamePaginated({
+            page,
+            pageSize,
+            search,
+            type: selectedType ?? undefined,
+        });
+        setData(result.items);
+        setTotal(result.total);
+        setTotalPages(result.totalPages);
+        setLoading(false);
+    }, [page, pageSize, search, selectedType]);
 
     useEffect(() => {
         void refresh();
     }, [refresh]);
 
-    const filteredData = useMemo(() => {
-        return data.filter((item) => {
-            const matchSearch =
-                !search.trim() ||
-                item.refNo.toLowerCase().includes(search.toLowerCase()) ||
-                // item.sku.toLowerCase().includes(search.toLowerCase()) ||
-                item.productName.toLowerCase().includes(search.toLowerCase());
-
-            const matchType = !selectedType || item.type === selectedType;
-
-            return matchSearch && matchType;
-        });
-    }, [data, search, selectedType]);
-
-    const paginatedData = useMemo(() => {
-        const start = (activePage - 1) * pageSize;
-        return filteredData.slice(start, start + pageSize);
-    }, [filteredData, activePage]);
+    const pagination = {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        onPageChange: (newPage: number) => setPage(newPage),
+    };
 
     const handleSubmit = async (values: StockOpnameFormValues) => {
         setLoading(true);
@@ -135,7 +134,7 @@ export function StockOpnameTable() {
                     <Group gap="xs">
                         <TextInput
                             w={300}
-                            placeholder="Cari SKU, Nama Produk, atau Ref..."
+                            placeholder="Cari Nama Produk atau Ref..."
                             leftSection={<IconSearch size={16} />}
                             rightSection={
                                 search ? (
@@ -143,14 +142,20 @@ export function StockOpnameTable() {
                                         variant="subtle"
                                         color="neutral"
                                         size="sm"
-                                        onClick={() => setSearch('')}
+                                        onClick={() => {
+                                            setSearch('');
+                                            setPage(1);
+                                        }}
                                     >
                                         <IconX size={14} />
                                     </ActionIcon>
                                 ) : null
                             }
                             value={search}
-                            onChange={(e) => setSearch(e.currentTarget.value)}
+                            onChange={(e) => {
+                                setSearch(e.currentTarget.value);
+                                setPage(1);
+                            }}
                         />
                         <Select
                             placeholder="Semua Tipe Penyesuaian"
@@ -161,26 +166,24 @@ export function StockOpnameTable() {
                             ]}
                             clearable
                             value={selectedType}
-                            onChange={setSelectedType}
+                            onChange={(val) => {
+                                setSelectedType(val);
+                                setPage(1);
+                            }}
                         />
                     </Group>
                     <Badge variant="light" color="orange">
-                        {filteredData.length} RECORD DITEMUKAN
+                        {total} RECORD DITEMUKAN
                     </Badge>
                 </Group>
 
                 <DataTable
                     columns={columns}
-                    data={paginatedData}
+                    data={data}
+                    loading={loading}
                     getRowKey={(item) => item.id}
                     emptyText="Data penyesuaian stok tidak ditemukan."
-                    pagination={{
-                        page: activePage,
-                        pageSize: pageSize,
-                        total: filteredData.length,
-                        totalPages: Math.ceil(filteredData.length / pageSize),
-                        onPageChange: setPage,
-                    }}
+                    pagination={pagination}
                 />
             </Card>
 

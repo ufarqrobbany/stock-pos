@@ -2,7 +2,7 @@
 
 import { ActionIcon, Badge, Card, Group, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import { type StockHistoryItem, stockHistoryService } from './services/stockService';
 
@@ -44,31 +44,38 @@ export function StockHistoryTable() {
     const [data, setData] = useState<StockHistoryItem[]>([]);
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    const [activePage, setPage] = useState(1);
-    const pageSize = 10;
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     const refresh = useCallback(async () => {
-        setData(await stockHistoryService.loadStockHistoryList());
-    }, []);
+        setLoading(true);
+        const result = await stockHistoryService.loadStockHistoryPaginated({
+            page,
+            pageSize,
+            search,
+            referenceType: selectedType ?? undefined,
+        });
+        setData(result.items);
+        setTotal(result.total);
+        setTotalPages(result.totalPages);
+        setLoading(false);
+    }, [page, pageSize, search, selectedType]);
 
     useEffect(() => {
         void refresh();
     }, [refresh]);
 
-    const filteredData = useMemo(() => {
-        return data.filter((item) => {
-            const matchSearch = !search.trim() || item.productName.toLowerCase().includes(search.toLowerCase());
-            const matchType = !selectedType || item.referenceType === selectedType;
-
-            return matchSearch && matchType;
-        });
-    }, [data, search, selectedType]);
-
-    const paginatedData = useMemo(() => {
-        const start = (activePage - 1) * pageSize;
-        return filteredData.slice(start, start + pageSize);
-    }, [filteredData, activePage]);
+    const pagination = {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        onPageChange: (newPage: number) => setPage(newPage),
+    };
 
     return (
         <Stack gap="md" p="xl">
@@ -92,14 +99,20 @@ export function StockHistoryTable() {
                                         variant="subtle"
                                         color="neutral"
                                         size="sm"
-                                        onClick={() => setSearch('')}
+                                        onClick={() => {
+                                            setSearch('');
+                                            setPage(1);
+                                        }}
                                     >
                                         <IconX size={14} />
                                     </ActionIcon>
                                 ) : null
                             }
                             value={search}
-                            onChange={(e) => setSearch(e.currentTarget.value)}
+                            onChange={(e) => {
+                                setSearch(e.currentTarget.value);
+                                setPage(1);
+                            }}
                         />
                         <Select
                             placeholder="Semua Mutasi"
@@ -110,26 +123,24 @@ export function StockHistoryTable() {
                             ]}
                             clearable
                             value={selectedType}
-                            onChange={setSelectedType}
+                            onChange={(val) => {
+                                setSelectedType(val);
+                                setPage(1);
+                            }}
                         />
                     </Group>
                     <Badge variant="light" color="blue">
-                        {filteredData.length} LOG DITEMUKAN
+                        {total} LOG DITEMUKAN
                     </Badge>
                 </Group>
 
                 <DataTable
                     columns={columns}
-                    data={paginatedData}
+                    data={data}
+                    loading={loading}
                     getRowKey={(item) => item.id}
                     emptyText="Belum ada riwayat pergerakan stok."
-                    pagination={{
-                        page: activePage,
-                        pageSize: pageSize,
-                        total: filteredData.length,
-                        totalPages: Math.ceil(filteredData.length / pageSize),
-                        onPageChange: setPage,
-                    }}
+                    pagination={pagination}
                 />
             </Card>
         </Stack>
