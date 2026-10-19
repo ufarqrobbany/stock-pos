@@ -1,10 +1,20 @@
-import { Group } from '@mantine/core';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { RoleWrapper } from '@/features/auth/components/RoleWrapper';
+import { DashboardView } from '@/features/dashboard/components/DashboardView';
+import { parseSessionCookie } from '@/utils/session';
 
 export const metadata: Metadata = {
     title: 'Dashboard',
 };
 
-export default function DashboardPage() {
-    return <Group p="md">Dashboard</Group>;
+export default async function DashboardPage() {
+    const cookieStore = await cookies();
+    const user = parseSessionCookie(cookieStore.get('stockpos_session')?.value);
+
+    return (
+        <RoleWrapper allowedRoles={['OWNER', 'CASHIER', 'INVENTORY']} user={user} type="page">
+            <DashboardView />
+        </RoleWrapper>
+    );
 }
