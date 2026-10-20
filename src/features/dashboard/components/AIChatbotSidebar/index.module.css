@@ -1,0 +1,51 @@
+.aside {
+    position: fixed;
+    top: 64px;
+    right: 0;
+    bottom: 0;
+    width: 380px;
+    max-width: 100%;
+    z-index: 50;
+    background-color: var(--mantine-color-body);
+    border-left: 1px solid var(--mantine-color-surface-2);
+    transition: transform 250ms ease;
+    transform: translateX(100%);
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.aside[data-open="true"] {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.messageWrapper {
+    max-width: 88%;
+}
+
+.messageWrapper[data-sender="user"] {
+    align-self: flex-end;
+}
+
+.messageWrapper[data-sender="ai"] {
+    align-self: flex-start;
+}
+
+.bubble {
+    padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+    border-radius: 12px;
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+.messageWrapper[data-sender="user"] .bubble {
+    background-color: var(--mantine-color-primary-6);
+    color: #fff;
+    border-top-right-radius: 2px;
+}
+
+.messageWrapper[data-sender="ai"] .bubble {
+    background-color: var(--mantine-color-default-hover);
+    border-top-left-radius: 2px;
+}

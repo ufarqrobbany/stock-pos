@@ -1,36 +1,58 @@
 'use client';
 
-import { Grid, Stack, Text, Title } from '@mantine/core';
-import { AiChatbotSidebar } from './AiChatbotSidebar';
+import { Box, Button, Group, Stack, Text, Title, useMantineTheme } from '@mantine/core';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { IconSparkles } from '@tabler/icons-react';
+import { AIChatbotSidebar } from './AIChatbotSidebar';
 import { LowStockTable } from './LowStockTable';
 import { MetricsCards } from './MetricsCards';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 import { SalesChart } from './SalesChart';
 
 export function DashboardView() {
+    const theme = useMantineTheme();
+    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints.md})`);
+    const [isChatbotOpen, { close: closeChatbot, open: openChatbot }] = useDisclosure(false);
+
     return (
-        <Stack gap="md" p="xl">
-            <div>
-                <Title order={2}>Dashboard Analitik</Title>
-                <Text c="neutral.4" size="sm">
-                    Ringkasan aktivitas penjualan dan pemantauan inventaris toko.
-                </Text>
-            </div>
-
-            <Grid>
-                <Grid.Col span={{ base: 12, md: 9 }}>
-                    <Stack gap="md">
-                        <MetricsCards />
-                        <SalesChart />
-                        <LowStockTable />
-                        <RecentTransactionsTable />
+        <Box
+            p="xl"
+            mr={isChatbotOpen && isDesktop ? 380 : 0}
+            style={{
+                transition: 'margin-right 250ms ease',
+            }}
+        >
+            <Stack gap="lg">
+                <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
+                    <Stack gap={2}>
+                        <Title order={2}>Dashboard Analitik</Title>
+                        <Text c="neutral.4" size="sm">
+                            Ringkasan aktivitas penjualan dan pemantauan inventaris toko.
+                        </Text>
                     </Stack>
-                </Grid.Col>
 
-                <Grid.Col span={{ base: 12, md: 3 }}>
-                    <AiChatbotSidebar />
-                </Grid.Col>
-            </Grid>
-        </Stack>
+                    {!isChatbotOpen && (
+                        <Button
+                            variant="default"
+                            size="sm"
+                            bd="1px solid var(--mantine-color-surface-2)"
+                            leftSection={<IconSparkles size={16} color="var(--mantine-color-primary-6)" />}
+                            onClick={openChatbot}
+                        >
+                            Tanya AI
+                        </Button>
+                    )}
+                </Group>
+
+                <Stack gap="md">
+                    <MetricsCards />
+                    <SalesChart />
+                    <LowStockTable />
+                    <RecentTransactionsTable />
+                </Stack>
+            </Stack>
+
+            <AIChatbotSidebar opened={isChatbotOpen} onClose={closeChatbot} />
+        </Box>
     );
 }

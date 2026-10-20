@@ -11,6 +11,11 @@ export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const session = parseSessionCookie(request.cookies.get('stockpos_session')?.value);
     const isLoginPath = pathname.startsWith('/login');
+    const isApiPath = pathname.startsWith('/api');
+
+    if (isApiPath) {
+        return NextResponse.next();
+    }
 
     if (!session && !isLoginPath) {
         return NextResponse.redirect(new URL('/login', request.url));
