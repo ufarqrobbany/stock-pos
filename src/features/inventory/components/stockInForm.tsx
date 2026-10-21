@@ -20,6 +20,8 @@ interface StockInFormProps {
     onSubmit: (values: StockInFormValues) => Promise<void>;
     loading?: boolean;
     onCancel?: () => void;
+    initialProductId?: string | null;
+    initialVariantId?: string | null;
 }
 
 const defaultValues: StockInFormValues = {
@@ -32,16 +34,22 @@ const defaultValues: StockInFormValues = {
     receivedAt: new Date().toISOString().slice(0, 10),
 };
 
-export function StockInForm({ onSubmit, loading = false, onCancel }: StockInFormProps) {
+export function StockInForm({
+    onSubmit,
+    loading = false,
+    onCancel,
+    initialProductId,
+    initialVariantId,
+}: StockInFormProps) {
     const [products, setProducts] = useState<ProductListItem[]>([]);
-
-    useEffect(() => {
-        productService.loadProducts().then((res) => setProducts(res.items));
-    }, []);
 
     const form = useForm<StockInFormValues>({
         mode: 'controlled',
-        initialValues: defaultValues,
+        initialValues: {
+            ...defaultValues,
+            productId: initialProductId ?? null,
+            variantId: initialVariantId ?? null,
+        },
         validate: {
             productId: (value) => (value ? null : 'Produk wajib dipilih.'),
             variantId: (value, values) => {
@@ -58,13 +66,17 @@ export function StockInForm({ onSubmit, loading = false, onCancel }: StockInForm
         },
     });
 
+    useEffect(() => {
+        productService.loadProducts().then((res) => setProducts(res.items));
+    }, []);
+
     const selectedProduct = products.find((p) => p.id === form.values.productId);
     const variants = selectedProduct?.variants ?? [];
     const hasVariants = variants.length > 0;
 
     const handleProductChange = (productId: string | null) => {
         form.setFieldValue('productId', productId);
-        form.setFieldValue('variantId', null); // reset pilihan varian tiap ganti produk
+        form.setFieldValue('variantId', null);
     };
 
     return (

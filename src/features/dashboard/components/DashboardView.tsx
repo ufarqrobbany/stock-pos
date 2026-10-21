@@ -8,6 +8,8 @@ import { LowStockTable } from './LowStockTable';
 import { MetricsCards } from './MetricsCards';
 import { RecentTransactionsTable } from './RecentTransactionsTable';
 import { SalesChart } from './SalesChart';
+import { TopProductsTable } from './TopProductsTable';
+import { TransactionChart } from './TransactionChart';
 
 export function DashboardView() {
     const theme = useMantineTheme();
@@ -47,7 +49,9 @@ export function DashboardView() {
                 <Stack gap="md">
                     <MetricsCards />
                     <SalesChart />
+                    <TransactionChart />
                     <LowStockTable />
+                    <TopProductsTable />
                     <RecentTransactionsTable />
                 </Stack>
             </Stack>
