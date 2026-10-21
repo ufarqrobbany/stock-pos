@@ -4,7 +4,7 @@ import { Card, Group, SimpleGrid, Skeleton, Text } from '@mantine/core';
 import { IconBoxSeam, IconCash, IconReceipt } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { ReactNode } from 'react';
-import { dashboardRepository } from '@/features/dashboard/services/dashboardService';
+import { dashboardService } from '@/features/dashboard/services/dashboardService';
 
 interface MetricCardProps {
     label: string;
@@ -66,7 +66,7 @@ function getSalesSubtext(today: number, yesterday: number): { text: string; colo
 }
 
 export function MetricsCards() {
-    const metrics = useLiveQuery(() => dashboardRepository.getMetrics(), []);
+    const metrics = useLiveQuery(() => dashboardService.getMetrics(), []);
     const loading = metrics === undefined;
 
     const salesSubtext = metrics

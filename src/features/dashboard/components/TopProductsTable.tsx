@@ -5,35 +5,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import type { Column } from '@/components/common/DataTable/types';
-import type { TopProductRow } from '@/db/repositories/dashboardRepository';
-import { dashboardRepository } from '@/features/dashboard/services/dashboardService';
-
-type Period = 'Minggu Ini' | 'Bulan Ini' | 'Tahun Ini';
-
-function getPeriodRange(period: Period): { start: string; end: string } {
-    const now = new Date();
-
-    if (period === 'Minggu Ini') {
-        const dayOfWeek = now.getDay();
-        const monday = new Date(now);
-        monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
-        monday.setHours(0, 0, 0, 0);
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        sunday.setHours(23, 59, 59, 999);
-        return { start: monday.toISOString(), end: sunday.toISOString() };
-    }
-
-    if (period === 'Bulan Ini') {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        return { start: start.toISOString(), end: end.toISOString() };
-    }
-
-    const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-    const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
-    return { start: start.toISOString(), end: end.toISOString() };
-}
+import { dashboardService, getPeriodRange } from '@/features/dashboard/services/dashboardService';
+import type { DashboardPeriod } from '@/features/dashboard/utils/dashboardUtils';
+import { DASHBOARD_PERIODS } from '@/features/dashboard/utils/dashboardUtils';
+import type { TopProductRow } from '../types';
 
 const RANK_COLORS: Record<number, string> = { 1: 'yellow', 2: 'gray', 3: 'orange' };
 
@@ -94,11 +69,11 @@ const columns: Column<TopProductRow>[] = [
 ];
 
 export function TopProductsTable() {
-    const [period, setPeriod] = useState<Period>('Minggu Ini');
+    const [period, setPeriod] = useState<DashboardPeriod>('Minggu Ini');
 
     const data = useLiveQuery<TopProductRow[]>(() => {
         const { start, end } = getPeriodRange(period);
-        return dashboardRepository.getTopProducts(start, end, 5);
+        return dashboardService.getTopProducts(start, end, 5);
     }, [period]);
 
     const loading = data === undefined;
@@ -114,9 +89,9 @@ export function TopProductsTable() {
                 </Stack>
                 <SegmentedControl
                     size="xs"
-                    data={['Minggu Ini', 'Bulan Ini', 'Tahun Ini']}
+                    data={DASHBOARD_PERIODS}
                     value={period}
-                    onChange={(val) => setPeriod(val as Period)}
+                    onChange={(val) => setPeriod(val as DashboardPeriod)}
                 />
             </Group>
 

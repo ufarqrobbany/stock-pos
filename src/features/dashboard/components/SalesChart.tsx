@@ -4,41 +4,14 @@ import { LineChart } from '@mantine/charts';
 import { Card, Group, ScrollArea, SegmentedControl, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { dashboardRepository } from '@/features/dashboard/services/dashboardService';
-
-type Period = 'Minggu Ini' | 'Bulan Ini' | 'Tahun Ini';
-
-const pad = (n: number) => String(n).padStart(2, '0');
-const fmtDate = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-
-function getPeriodLabel(period: Period): string {
-    const now = new Date();
-    if (period === 'Minggu Ini') {
-        const day = now.getDay();
-        const mon = new Date(now);
-        mon.setDate(now.getDate() - ((day + 6) % 7));
-        const sun = new Date(mon);
-        sun.setDate(mon.getDate() + 6);
-        return `${fmtDate(mon)} – ${fmtDate(sun)}`;
-    }
-    if (period === 'Bulan Ini') {
-        const first = new Date(now.getFullYear(), now.getMonth(), 1);
-        const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        return `${fmtDate(first)} – ${fmtDate(last)}`;
-    }
-    return `01/01/${now.getFullYear()} – 31/12/${now.getFullYear()}`;
-}
-
-interface ChartDataItem {
-    label: string;
-    tanggal: string;
-    penjualan: number;
-}
+import { dashboardService } from '@/features/dashboard/services/dashboardService';
+import type { SalesChartItem } from '../types';
+import { DASHBOARD_PERIODS, type DashboardPeriod, getPeriodLabel } from '../utils/dashboardUtils';
 
 interface RechartsPayloadEntry {
     value: number;
     name: string;
-    payload: ChartDataItem;
+    payload: SalesChartItem;
 }
 
 function CustomTooltip({ label, payload }: { label?: string | number; payload?: RechartsPayloadEntry[] }) {
@@ -77,12 +50,12 @@ function CustomTooltip({ label, payload }: { label?: string | number; payload?: 
 }
 
 export function SalesChart() {
-    const [period, setPeriod] = useState<Period>('Minggu Ini');
+    const [period, setPeriod] = useState<DashboardPeriod>('Minggu Ini');
 
-    const data = useLiveQuery<ChartDataItem[]>(() => {
-        if (period === 'Minggu Ini') return dashboardRepository.getSalesWeekly();
-        if (period === 'Bulan Ini') return dashboardRepository.getSalesThisMonth();
-        return dashboardRepository.getSalesThisYear();
+    const data = useLiveQuery<SalesChartItem[]>(() => {
+        if (period === 'Minggu Ini') return dashboardService.getSalesWeekly();
+        if (period === 'Bulan Ini') return dashboardService.getSalesThisMonth();
+        return dashboardService.getSalesThisYear();
     }, [period]);
 
     const loading = data === undefined;
@@ -133,9 +106,9 @@ export function SalesChart() {
                 </Stack>
                 <SegmentedControl
                     size="xs"
-                    data={['Minggu Ini', 'Bulan Ini', 'Tahun Ini']}
+                    data={DASHBOARD_PERIODS}
                     value={period}
-                    onChange={(val) => setPeriod(val as Period)}
+                    onChange={(val) => setPeriod(val as DashboardPeriod)}
                 />
             </Group>
 

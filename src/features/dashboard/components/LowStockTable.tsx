@@ -8,10 +8,10 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { DataTable } from '@/components/common/DataTable';
 import type { Column } from '@/components/common/DataTable/types';
-import type { LowStockRow } from '@/db/repositories/dashboardRepository';
-import { dashboardRepository } from '@/features/dashboard/services/dashboardService';
+import { dashboardService } from '@/features/dashboard/services/dashboardService';
 import { StockInForm, type StockInFormValues } from '@/features/inventory/components/stockInForm';
 import { stockService } from '@/features/inventory/services/stockService';
+import type { LowStockRow } from '../types';
 
 const LIMIT = 5;
 
@@ -20,7 +20,7 @@ export function LowStockTable() {
     const [selectedItem, setSelectedItem] = useState<LowStockRow | null>(null);
     const [submitLoading, setSubmitLoading] = useState(false);
 
-    const allRows = useLiveQuery(() => dashboardRepository.getLowStock(), []);
+    const allRows = useLiveQuery(() => dashboardService.getLowStock(), []);
     const loading = allRows === undefined;
 
     const displayData = (allRows ?? []).slice(0, LIMIT);

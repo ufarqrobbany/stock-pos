@@ -4,31 +4,10 @@ import { LineChart } from '@mantine/charts';
 import { Card, Group, ScrollArea, SegmentedControl, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import type { TxChartItem } from '@/db/repositories/dashboardRepository';
-import { dashboardRepository } from '@/features/dashboard/services/dashboardService';
-
-type Period = 'Minggu Ini' | 'Bulan Ini' | 'Tahun Ini';
-
-const pad = (n: number) => String(n).padStart(2, '0');
-const fmtDate = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-
-function getPeriodLabel(period: Period): string {
-    const now = new Date();
-    if (period === 'Minggu Ini') {
-        const day = now.getDay();
-        const mon = new Date(now);
-        mon.setDate(now.getDate() - ((day + 6) % 7));
-        const sun = new Date(mon);
-        sun.setDate(mon.getDate() + 6);
-        return `${fmtDate(mon)} – ${fmtDate(sun)}`;
-    }
-    if (period === 'Bulan Ini') {
-        const first = new Date(now.getFullYear(), now.getMonth(), 1);
-        const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        return `${fmtDate(first)} – ${fmtDate(last)}`;
-    }
-    return `01/01/${now.getFullYear()} – 31/12/${now.getFullYear()}`;
-}
+import { dashboardService } from '@/features/dashboard/services/dashboardService';
+import type { DashboardPeriod } from '@/features/dashboard/utils/dashboardUtils';
+import { DASHBOARD_PERIODS, getPeriodLabel } from '@/features/dashboard/utils/dashboardUtils';
+import type { TxChartItem } from '../types';
 
 interface TooltipPayloadEntry {
     value: number;
@@ -68,12 +47,12 @@ function TxTooltip({ label, payload }: { label?: string | number; payload?: Tool
 }
 
 export function TransactionChart() {
-    const [period, setPeriod] = useState<Period>('Minggu Ini');
+    const [period, setPeriod] = useState<DashboardPeriod>('Minggu Ini');
 
     const data = useLiveQuery<TxChartItem[]>(() => {
-        if (period === 'Minggu Ini') return dashboardRepository.getTxWeekly();
-        if (period === 'Bulan Ini') return dashboardRepository.getTxThisMonth();
-        return dashboardRepository.getTxThisYear();
+        if (period === 'Minggu Ini') return dashboardService.getTxWeekly();
+        if (period === 'Bulan Ini') return dashboardService.getTxThisMonth();
+        return dashboardService.getTxThisYear();
     }, [period]);
 
     const loading = data === undefined;
@@ -118,9 +97,9 @@ export function TransactionChart() {
                 </Stack>
                 <SegmentedControl
                     size="xs"
-                    data={['Minggu Ini', 'Bulan Ini', 'Tahun Ini']}
+                    data={DASHBOARD_PERIODS}
                     value={period}
-                    onChange={(val) => setPeriod(val as Period)}
+                    onChange={(val) => setPeriod(val as DashboardPeriod)}
                 />
             </Group>
 

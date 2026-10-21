@@ -1,53 +1,12 @@
 import { db } from '@/db';
-
-export interface DashboardMetrics {
-    salesToday: number;
-    transactionsToday: number;
-    unitsSoldToday: number;
-    salesYesterday: number;
-    transactionsYesterday: number;
-}
-
-export interface SalesChartItem {
-    label: string;
-    tanggal: string;
-    penjualan: number;
-}
-
-export interface TxChartItem {
-    label: string;
-    tanggal: string;
-    transaksi: number;
-}
-
-export interface LowStockRow {
-    key: string;
-    productId: string;
-    variantId: string | null;
-    name: string;
-    sku: string;
-    stock: number;
-    threshold: number;
-}
-
-export interface TopProductRow {
-    rank: number;
-    productId: string;
-    variantId: string | null;
-    name: string;
-    sku: string;
-    category: string;
-    qtySold: number;
-}
-
-export interface RecentTransactionRow {
-    id: string;
-    transactionNumber: string;
-    cashierName: string;
-    total: number;
-    paymentMethod: string;
-    createdAt: string;
-}
+import type {
+    DashboardMetrics,
+    LowStockRow,
+    RecentTransactionRow,
+    SalesChartItem,
+    TopProductRow,
+    TxChartItem,
+} from '@/features/dashboard/types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const fmtDate = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
@@ -92,6 +51,25 @@ async function sumByKey(
     return map;
 }
 
+async function countByKey(
+    start: string,
+    end: string,
+    getKey: (createdAt: string) => string
+): Promise<Map<string, number>> {
+    const txs = await db.salesTransactions
+        .where('createdAt')
+        .between(start, end, true, true)
+        .and((t) => t.status === 'COMPLETED')
+        .toArray();
+
+    const map = new Map<string, number>();
+    for (const tx of txs) {
+        const key = getKey(tx.createdAt);
+        map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+}
+
 export const dashboardRepository = {
     async getMetrics(): Promise<DashboardMetrics> {
         const today = new Date();
@@ -115,21 +93,16 @@ export const dashboardRepository = {
         ]);
 
         const todayTxIds = todayTxs.map((t) => t.id);
-
         const todayItems =
             todayTxIds.length > 0
                 ? await db.salesTransactionItems.where('transactionId').anyOf(todayTxIds).toArray()
                 : [];
 
-        const unitsSoldToday = todayItems.reduce((sum, item) => sum + item.quantity, 0);
-        const salesToday = todayTxs.reduce((sum, t) => sum + t.total, 0);
-        const salesYesterday = yesterdayTxs.reduce((sum, t) => sum + t.total, 0);
-
         return {
-            salesToday,
+            salesToday: todayTxs.reduce((sum, t) => sum + t.total, 0),
             transactionsToday: todayTxs.length,
-            unitsSoldToday,
-            salesYesterday,
+            unitsSoldToday: todayItems.reduce((sum, item) => sum + item.quantity, 0),
+            salesYesterday: yesterdayTxs.reduce((sum, t) => sum + t.total, 0),
             transactionsYesterday: yesterdayTxs.length,
         };
     },
@@ -140,7 +113,6 @@ export const dashboardRepository = {
         const monday = new Date(now);
         monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
         monday.setHours(0, 0, 0, 0);
-
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
         sunday.setHours(23, 59, 59, 999);
@@ -155,11 +127,7 @@ export const dashboardRepository = {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
             const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-            return {
-                label: dayNames[i]!,
-                tanggal: fmtDate(d),
-                penjualan: map.get(key) ?? 0,
-            };
+            return { label: dayNames[i]!, tanggal: fmtDate(d), penjualan: map.get(key) ?? 0 };
         });
     },
 
@@ -170,19 +138,12 @@ export const dashboardRepository = {
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const { start, end } = getMonthRange(year, month);
 
-        const map = await sumByKey(start, end, (iso) => {
-            const d = new Date(iso);
-            return pad(d.getDate());
-        });
+        const map = await sumByKey(start, end, (iso) => pad(new Date(iso).getDate()));
 
         return Array.from({ length: daysInMonth }, (_, i) => {
             const date = i + 1;
             const d = new Date(year, month, date);
-            return {
-                label: pad(date),
-                tanggal: fmtDate(d),
-                penjualan: map.get(pad(date)) ?? 0,
-            };
+            return { label: pad(date), tanggal: fmtDate(d), penjualan: map.get(pad(date)) ?? 0 };
         });
     },
 
@@ -191,10 +152,7 @@ export const dashboardRepository = {
         const year = now.getFullYear();
         const { start, end } = getYearRange(year);
 
-        const map = await sumByKey(start, end, (iso) => {
-            const d = new Date(iso);
-            return pad(d.getMonth() + 1);
-        });
+        const map = await sumByKey(start, end, (iso) => pad(new Date(iso).getMonth() + 1));
 
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         return monthNames.map((name, mo) => {
@@ -208,21 +166,6 @@ export const dashboardRepository = {
         });
     },
 
-    async _countByKey(start: string, end: string, getKey: (createdAt: string) => string): Promise<Map<string, number>> {
-        const txs = await db.salesTransactions
-            .where('createdAt')
-            .between(start, end, true, true)
-            .and((t) => t.status === 'COMPLETED')
-            .toArray();
-
-        const map = new Map<string, number>();
-        for (const tx of txs) {
-            const key = getKey(tx.createdAt);
-            map.set(key, (map.get(key) ?? 0) + 1);
-        }
-        return map;
-    },
-
     async getTxWeekly(): Promise<TxChartItem[]> {
         const now = new Date();
         const dayOfWeek = now.getDay();
@@ -233,7 +176,7 @@ export const dashboardRepository = {
         sunday.setDate(monday.getDate() + 6);
         sunday.setHours(23, 59, 59, 999);
 
-        const map = await dashboardRepository._countByKey(monday.toISOString(), sunday.toISOString(), (iso) => {
+        const map = await countByKey(monday.toISOString(), sunday.toISOString(), (iso) => {
             const d = new Date(iso);
             return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         });
@@ -254,7 +197,7 @@ export const dashboardRepository = {
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const { start, end } = getMonthRange(year, month);
 
-        const map = await dashboardRepository._countByKey(start, end, (iso) => pad(new Date(iso).getDate()));
+        const map = await countByKey(start, end, (iso) => pad(new Date(iso).getDate()));
 
         return Array.from({ length: daysInMonth }, (_, i) => {
             const date = i + 1;
@@ -268,7 +211,7 @@ export const dashboardRepository = {
         const year = now.getFullYear();
         const { start, end } = getYearRange(year);
 
-        const map = await dashboardRepository._countByKey(start, end, (iso) => pad(new Date(iso).getMonth() + 1));
+        const map = await countByKey(start, end, (iso) => pad(new Date(iso).getMonth() + 1));
 
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         return monthNames.map((name, mo) => {
@@ -377,21 +320,23 @@ export const dashboardRepository = {
             .slice(0, limit);
 
         const productIds = [...new Set(sorted.map((s) => s.productId))];
-        const products = await db.products.where('id').anyOf(productIds).toArray();
-        const categories = await db.categories.toArray();
+        const [products, categories] = await Promise.all([
+            db.products.where('id').anyOf(productIds).toArray(),
+            db.categories.toArray(),
+        ]);
         const productMap = new Map(products.map((p) => [p.id, p]));
         const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
         return sorted.map((s, i) => {
             const product = productMap.get(s.productId);
             const category = product ? categoryMap.get(product.categoryId) : undefined;
-            const displayName = s.variantName ? `${s.productName} (${s.variantName})` : s.productName;
+            const name = s.variantName ? `${s.productName} (${s.variantName})` : s.productName;
 
             return {
                 rank: i + 1,
                 productId: s.productId,
                 variantId: s.variantId,
-                name: displayName,
+                name,
                 sku: s.skuSnapshot,
                 category: category?.name ?? '-',
                 qtySold: s.qty,

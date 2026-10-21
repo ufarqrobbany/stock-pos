@@ -4,8 +4,8 @@ import { Badge, Card, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { DataTable } from '@/components/common/DataTable';
 import type { Column } from '@/components/common/DataTable/types';
-import type { RecentTransactionRow } from '@/db/repositories/dashboardRepository';
-import { dashboardRepository } from '@/features/dashboard/services/dashboardService';
+import { dashboardService } from '@/features/dashboard/services/dashboardService';
+import type { RecentTransactionRow } from '../types';
 
 const METHOD_COLOR: Record<string, string> = {
     CASH: 'teal',
@@ -51,11 +51,7 @@ const columns: Column<RecentTransactionRow>[] = [
         width: 110,
         align: 'center',
         render: (row) => (
-            <Badge
-                size="sm"
-                variant="light"
-                color={METHOD_COLOR[row.paymentMethod] ?? 'gray'}
-            >
+            <Badge size="sm" variant="light" color={METHOD_COLOR[row.paymentMethod] ?? 'gray'}>
                 {row.paymentMethod}
             </Badge>
         ),
@@ -74,10 +70,7 @@ const columns: Column<RecentTransactionRow>[] = [
 ];
 
 export function RecentTransactionsTable() {
-    const data = useLiveQuery<RecentTransactionRow[]>(
-        () => dashboardRepository.getRecentTransactions(5),
-        []
-    );
+    const data = useLiveQuery<RecentTransactionRow[]>(() => dashboardService.getRecentTransactions(5), []);
 
     const loading = data === undefined;
 
@@ -97,12 +90,7 @@ export function RecentTransactionsTable() {
                     ))}
                 </Stack>
             ) : (
-                <DataTable
-                    columns={columns}
-                    data={data}
-                    getRowKey={(row) => row.id}
-                    emptyText="Belum ada transaksi."
-                />
+                <DataTable columns={columns} data={data} getRowKey={(row) => row.id} emptyText="Belum ada transaksi." />
             )}
         </Card>
     );
