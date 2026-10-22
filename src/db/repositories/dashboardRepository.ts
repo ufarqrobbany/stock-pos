@@ -4,7 +4,6 @@ import type {
     LowStockRow,
     RecentTransactionRow,
     SalesChartItem,
-    TopProductRow,
     TxChartItem,
 } from '@/features/dashboard/types';
 
@@ -288,76 +287,6 @@ export const dashboardRepository = {
 
         rows.sort((a, b) => a.stock - b.stock);
         return rows;
-    },
-
-    async getTopProducts(start: string, end: string, limit = 5): Promise<TopProductRow[]> {
-        const txs = await db.salesTransactions
-            .where('createdAt')
-            .between(start, end, true, true)
-            .and((t) => t.status === 'COMPLETED')
-            .toArray();
-
-        if (txs.length === 0) return [];
-
-        const txIds = txs.map((t) => t.id);
-        const items = await db.salesTransactionItems.where('transactionId').anyOf(txIds).toArray();
-
-        const aggMap = new Map<
-            string,
-            {
-                productId: string;
-                variantId: string | null;
-                productName: string;
-                variantName: string | null;
-                skuSnapshot: string;
-                qty: number;
-            }
-        >();
-
-        for (const item of items) {
-            const key = `${item.productId}::${item.variantId ?? 'none'}`;
-            const existing = aggMap.get(key);
-            if (existing) {
-                existing.qty += item.quantity;
-            } else {
-                aggMap.set(key, {
-                    productId: item.productId,
-                    variantId: item.variantId,
-                    productName: item.productNameSnapshot,
-                    variantName: item.variantNameSnapshot,
-                    skuSnapshot: item.skuSnapshot,
-                    qty: item.quantity,
-                });
-            }
-        }
-
-        const sorted = Array.from(aggMap.values())
-            .sort((a, b) => b.qty - a.qty)
-            .slice(0, limit);
-
-        const productIds = [...new Set(sorted.map((s) => s.productId))];
-        const [products, categories] = await Promise.all([
-            db.products.where('id').anyOf(productIds).toArray(),
-            db.categories.toArray(),
-        ]);
-        const productMap = new Map(products.map((p) => [p.id, p]));
-        const categoryMap = new Map(categories.map((c) => [c.id, c]));
-
-        return sorted.map((s, i) => {
-            const product = productMap.get(s.productId);
-            const category = product ? categoryMap.get(product.categoryId) : undefined;
-            const name = s.variantName ? `${s.productName} (${s.variantName})` : s.productName;
-
-            return {
-                rank: i + 1,
-                productId: s.productId,
-                variantId: s.variantId,
-                name,
-                sku: s.skuSnapshot,
-                category: category?.name ?? '-',
-                qtySold: s.qty,
-            };
-        });
     },
 
     async getRecentTransactions(limit = 5): Promise<RecentTransactionRow[]> {

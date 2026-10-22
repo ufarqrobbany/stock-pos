@@ -28,16 +28,6 @@ export interface LowStockRow {
     threshold: number;
 }
 
-export interface TopProductRow {
-    rank: number;
-    productId: string;
-    variantId: string | null;
-    name: string;
-    sku: string;
-    category: string;
-    qtySold: number;
-}
-
 export interface RecentTransactionRow {
     id: string;
     transactionNumber: string;
