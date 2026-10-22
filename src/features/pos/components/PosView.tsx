@@ -1,7 +1,7 @@
 'use client';
 
-import { Box, Flex, Stack, Text, Title } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { Box, Stack, Text, Title, useMantineTheme } from '@mantine/core';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useCallback, useState } from 'react';
 import type { PaymentMethod } from '@/db/types/sales';
 import type { UserRole } from '@/db/types/user';
@@ -24,6 +24,9 @@ export interface PosViewProps {
 }
 
 export function PosView({ cashierId = 'cashier', userRole }: PosViewProps) {
+    const theme = useMantineTheme();
+    const isDesktop = useMediaQuery(`(min-width: ${theme.breakpoints.md})`);
+
     const catalog = usePosCatalog();
     const cart = usePosCart();
     const customers = usePosCustomers();
@@ -89,71 +92,62 @@ export function PosView({ cashierId = 'cashier', userRole }: PosViewProps) {
 
     return (
         <>
-            <Flex
-                direction={{ base: 'column', md: 'row' }}
-                gap="md"
+            <Box
                 p="xl"
                 h="calc(100dvh - 64px)"
                 mah="calc(100dvh - 64px)"
-                style={{ overflow: 'hidden', boxSizing: 'border-box' }}
+                mr={isDesktop ? 380 : 0}
+                style={{
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    transition: 'margin-right 200ms ease',
+                }}
             >
-                <Box
-                    flex={1}
-                    h="100%"
-                    mih={0}
-                    style={{ minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
-                >
-                    <Stack gap={2} mb="md">
-                        <Title order={2}>Point of Sale</Title>
-                        <Text c="neutral.4" size="sm">
-                            Kelola transaksi penjualan dan pencatatan kasir
-                        </Text>
-                    </Stack>
+                <Stack gap={2} mb="md">
+                    <Title order={2}>Point of Sale</Title>
+                    <Text c="neutral.4" size="sm">
+                        Kelola transaksi penjualan dan pencatatan kasir
+                    </Text>
+                </Stack>
 
-                    <Box mb="md">
-                        <PosFilter
-                            search={catalog.search}
-                            onSearchChange={catalog.setSearch}
-                            categories={catalog.categories}
-                            selectedCategory={catalog.selectedCategory}
-                            onSelectCategory={catalog.setSelectedCategory}
-                        />
-                    </Box>
-
-                    <Box flex={1} mih={0} pr={4} style={{ overflowY: 'auto' }}>
-                        <PosProductGrid
-                            products={catalog.products}
-                            isLoading={catalog.loading}
-                            hasActiveFilter={catalog.hasActiveFilter}
-                            totalActiveCount={catalog.totalActiveCount}
-                            searchQuery={catalog.search}
-                            selectedCategoryName={catalog.selectedCategoryName}
-                            userRole={userRole}
-                            onAddToCart={cart.handleAddToCart}
-                            onSelectVariant={setSelectedProductForVariant}
-                        />
-                    </Box>
-                </Box>
-
-                <Box
-                    w={{ base: '100%', md: 380, lg: 420 }}
-                    h="100%"
-                    mih={0}
-                    style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}
-                >
-                    <PosCart
-                        items={cart.cartItems}
-                        customers={customers.customers}
-                        selectedCustomerId={cart.customerId}
-                        onSelectCustomer={cart.handleSelectCustomer}
-                        onAddCustomer={customers.addCustomer}
-                        onUpdateQuantity={cart.handleUpdateQuantity}
-                        onRemoveItem={cart.handleRemoveItem}
-                        onClearCart={cart.handleClearCart}
-                        onCheckout={handleOpenCheckout}
+                <Box mb="md">
+                    <PosFilter
+                        search={catalog.search}
+                        onSearchChange={catalog.setSearch}
+                        categories={catalog.categories}
+                        selectedCategory={catalog.selectedCategory}
+                        onSelectCategory={catalog.setSelectedCategory}
                     />
                 </Box>
-            </Flex>
+
+                <Box flex={1} mih={0} pr={4} style={{ overflowY: 'auto' }}>
+                    <PosProductGrid
+                        products={catalog.products}
+                        isLoading={catalog.loading}
+                        hasActiveFilter={catalog.hasActiveFilter}
+                        totalActiveCount={catalog.totalActiveCount}
+                        searchQuery={catalog.search}
+                        selectedCategoryName={catalog.selectedCategoryName}
+                        userRole={userRole}
+                        onAddToCart={cart.handleAddToCart}
+                        onSelectVariant={setSelectedProductForVariant}
+                    />
+                </Box>
+            </Box>
+
+            <PosCart
+                items={cart.cartItems}
+                customers={customers.customers}
+                selectedCustomerId={cart.customerId}
+                onSelectCustomer={cart.handleSelectCustomer}
+                onAddCustomer={customers.addCustomer}
+                onUpdateQuantity={cart.handleUpdateQuantity}
+                onRemoveItem={cart.handleRemoveItem}
+                onClearCart={cart.handleClearCart}
+                onCheckout={handleOpenCheckout}
+            />
 
             <PosVariantModal
                 product={selectedProductForVariant}

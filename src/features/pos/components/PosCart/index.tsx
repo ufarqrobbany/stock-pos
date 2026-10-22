@@ -5,7 +5,6 @@ import {
     Badge,
     Box,
     Button,
-    Card,
     Center,
     Divider,
     Group,
@@ -28,8 +27,9 @@ import {
 import { useMemo } from 'react';
 import type { Customer } from '@/db/types/customer';
 import type { CustomerFormData } from '@/features/customers/schemas/customerSchema';
-import type { PosCartItem } from '../types';
-import { PosAddCustomerModal } from './PosAddCustomerModal';
+import type { PosCartItem } from '../../types';
+import { PosAddCustomerModal } from '../PosAddCustomerModal';
+import classes from './index.module.css';
 
 export interface PosCartProps {
     items: PosCartItem[];
@@ -77,65 +77,69 @@ export function PosCart({
 
     return (
         <>
-            <Card withBorder shadow="none" p="sm" radius="md" h="100%" mih={0} style={{ overflow: 'hidden' }}>
-                <Group justify="space-between" align="center" mb={8}>
-                    <Group gap={8} align="center">
-                        <IconShoppingCart size={20} color="var(--mantine-color-primary-6)" />
-                        <Text fw={600} size="md">
-                            Detail Pesanan
-                        </Text>
+            <Box component="aside" className={classes.cartAside} p="sm">
+                <Box pb="sm">
+                    <Group justify="space-between" align="center" mb={8}>
+                        <Group gap={8} align="center">
+                            <IconShoppingCart size={20} color="var(--mantine-color-primary-6)" />
+                            <Text fw={600} size="md">
+                                Detail Pesanan
+                            </Text>
+                        </Group>
+
+                        {items.length > 0 && (
+                            <Button
+                                variant="subtle"
+                                color="red"
+                                size="compact-xs"
+                                leftSection={<IconTrash size={12} />}
+                                onClick={onClearCart}
+                            >
+                                Kosongkan
+                            </Button>
+                        )}
                     </Group>
 
-                    {items.length > 0 && (
-                        <Button
-                            variant="subtle"
-                            color="red"
-                            size="compact-xs"
-                            leftSection={<IconTrash size={12} />}
-                            onClick={onClearCart}
-                        >
-                            Kosongkan
-                        </Button>
-                    )}
-                </Group>
-
-                <Group my="sm" gap={6} wrap="nowrap" align="center">
-                    <Select
-                        size="xs"
-                        placeholder="Pilih Pelanggan (opsional)"
-                        leftSection={<IconUser size={14} color="var(--mantine-color-neutral-4)" />}
-                        data={customerOptions}
-                        value={selectedCustomerId}
-                        onChange={handleCustomerChange}
-                        searchable
-                        clearable
-                        nothingFoundMessage="Tidak ada pelanggan ditemukan"
-                        flex={1}
-                        style={{ minWidth: 0 }}
-                    />
-                    <Tooltip label="Tambah Pelanggan Baru" withArrow position="top">
-                        <ActionIcon
-                            color="primary"
-                            size="30px"
-                            onClick={openAddCustomerModal}
-                            aria-label="Tambah Pelanggan Baru"
-                        >
-                            <IconUserPlus size={16} />
-                        </ActionIcon>
-                    </Tooltip>
-                </Group>
+                    <Group mt="xs" gap={6} wrap="nowrap" align="center">
+                        <Select
+                            size="xs"
+                            placeholder="Pilih Pelanggan (opsional)"
+                            leftSection={<IconUser size={14} color="var(--mantine-color-neutral-4)" />}
+                            data={customerOptions}
+                            value={selectedCustomerId}
+                            onChange={handleCustomerChange}
+                            searchable
+                            clearable
+                            nothingFoundMessage="Tidak ada pelanggan ditemukan"
+                            flex={1}
+                            style={{ minWidth: 0 }}
+                        />
+                        <Tooltip label="Tambah Pelanggan Baru" withArrow position="top">
+                            <ActionIcon
+                                color="primary"
+                                size="30px"
+                                onClick={openAddCustomerModal}
+                                aria-label="Tambah Pelanggan Baru"
+                            >
+                                <IconUserPlus size={16} />
+                            </ActionIcon>
+                        </Tooltip>
+                    </Group>
+                </Box>
 
                 <Divider my={4} />
 
                 <Box flex={1} mih={0} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                     {items.length === 0 ? (
-                        <Center h="100%" py={36}>
-                            <Text size="sm" c="neutral.5" ta="center">
-                                Keranjang Belum Terisi
-                            </Text>
+                        <Center h="100%" py={48}>
+                            <Stack align="center" gap={6}>
+                                <Text size="sm" c="neutral.5" ta="center">
+                                    Keranjang Belum Terisi
+                                </Text>
+                            </Stack>
                         </Center>
                     ) : (
-                        <ScrollArea h="100%" scrollbarSize={6} flex={1} mih={0}>
+                        <ScrollArea h="100%" scrollbarSize={6} flex={1} mih={0} py="xs" pr={4}>
                             <Stack gap={8} py={4}>
                                 {items.map((item) => (
                                     <Box
@@ -206,38 +210,40 @@ export function PosCart({
 
                 <Divider my={6} />
 
-                <Stack gap="xs" pt={4}>
-                    <Group justify="space-between" align="center">
-                        <Text size="xs" c="dimmed">
-                            Jumlah Barang
-                        </Text>
-                        <Text size="xs" fw={600}>
-                            {totalItems} item
-                        </Text>
-                    </Group>
+                <Box pt="xs">
+                    <Stack gap="xs">
+                        <Group justify="space-between" align="center">
+                            <Text size="xs" c="dimmed">
+                                Jumlah Barang
+                            </Text>
+                            <Text size="xs" fw={600}>
+                                {totalItems} item
+                            </Text>
+                        </Group>
 
-                    <Group justify="space-between" align="center">
-                        <Text fw={600} size="md">
-                            Total Tagihan
-                        </Text>
-                        <Text fw={800} size="lg" c="primary.7">
-                            Rp {total.toLocaleString('id-ID')}
-                        </Text>
-                    </Group>
+                        <Group justify="space-between" align="center">
+                            <Text fw={600} size="md">
+                                Total Tagihan
+                            </Text>
+                            <Text fw={800} size="lg" c="primary.7">
+                                Rp {total.toLocaleString('id-ID')}
+                            </Text>
+                        </Group>
 
-                    <Button
-                        size="md"
-                        color="primary"
-                        disabled={items.length === 0}
-                        onClick={onCheckout}
-                        leftSection={<IconReceipt2 size={18} />}
-                        fullWidth
-                        mt={4}
-                    >
-                        Bayar (Rp {total.toLocaleString('id-ID')})
-                    </Button>
-                </Stack>
-            </Card>
+                        <Button
+                            size="md"
+                            color="primary"
+                            disabled={items.length === 0}
+                            onClick={onCheckout}
+                            leftSection={<IconReceipt2 size={18} />}
+                            fullWidth
+                            mt={4}
+                        >
+                            Bayar (Rp {total.toLocaleString('id-ID')})
+                        </Button>
+                    </Stack>
+                </Box>
+            </Box>
 
             <PosAddCustomerModal
                 opened={isAddCustomerModalOpen}

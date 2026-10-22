@@ -1,6 +1,6 @@
 'use client';
 
-import { Center, Loader, SimpleGrid, Text } from '@mantine/core';
+import { Box, Center, Loader, Text } from '@mantine/core';
 import type { UserRole } from '@/db/types/user';
 import type { ProductListItem } from '@/features/products/types';
 import { PosProductCard } from './PosProductCard';
@@ -46,7 +46,13 @@ export function PosProductGrid({
     }
 
     return (
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 3, lg: 4 }} spacing="sm">
+        <Box
+            style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 185px))',
+                gap: 'var(--mantine-spacing-sm)',
+            }}
+        >
             {products.map((product) => (
                 <PosProductCard
                     key={product.id}
@@ -55,6 +61,6 @@ export function PosProductGrid({
                     onSelectVariant={onSelectVariant}
                 />
             ))}
-        </SimpleGrid>
+        </Box>
     );
 }
