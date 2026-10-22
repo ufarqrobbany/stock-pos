@@ -1,17 +1,11 @@
 'use client';
 
-import { Badge, Card, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Card, Text, Title } from '@mantine/core';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { DataTable } from '@/components/common/DataTable';
 import type { Column } from '@/components/common/DataTable/types';
 import { dashboardService } from '@/features/dashboard/services/dashboardService';
 import type { RecentTransactionRow } from '../types';
-
-const METHOD_COLOR: Record<string, string> = {
-    CASH: 'teal',
-    QRIS: 'violet',
-    TRANSFER: 'blue',
-};
 
 function formatDateTime(isoString: string): string {
     const d = new Date(isoString);
@@ -46,17 +40,6 @@ const columns: Column<RecentTransactionRow>[] = [
         render: (row) => <Text size="sm">{row.cashierName}</Text>,
     },
     {
-        id: 'paymentMethod',
-        label: 'Metode',
-        width: 110,
-        align: 'center',
-        render: (row) => (
-            <Badge size="sm" variant="light" color={METHOD_COLOR[row.paymentMethod] ?? 'gray'}>
-                {row.paymentMethod}
-            </Badge>
-        ),
-    },
-    {
         id: 'total',
         label: 'Total',
         width: 130,
@@ -75,23 +58,19 @@ export function RecentTransactionsTable() {
     const loading = data === undefined;
 
     return (
-        <Card withBorder shadow="none" p="md" radius="md">
-            <Stack gap={2} mb="md">
-                <Title order={4}>Transaksi Terakhir</Title>
-                <Text size="xs" c="dimmed">
-                    Daftar transaksi penjualan kasir yang baru masuk.
-                </Text>
-            </Stack>
+        <Card withBorder shadow="none" p="md" radius="md" h="100%">
+            <Title order={4} mb="xs">
+                Transaksi Terakhir
+            </Title>
 
-            {loading ? (
-                <Stack gap="xs">
-                    {['skeleton-0', 'skeleton-1', 'skeleton-2', 'skeleton-3', 'skeleton-4'].map((key) => (
-                        <Skeleton key={key} height={44} radius="sm" />
-                    ))}
-                </Stack>
-            ) : (
-                <DataTable columns={columns} data={data} getRowKey={(row) => row.id} emptyText="Belum ada transaksi." />
-            )}
+            <DataTable
+                columns={columns}
+                data={data ?? []}
+                loading={loading}
+                getRowKey={(row) => row.id}
+                emptyText="Belum ada transaksi."
+                minWidth={440}
+            />
         </Card>
     );
 }

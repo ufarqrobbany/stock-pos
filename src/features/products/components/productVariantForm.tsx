@@ -1,17 +1,8 @@
 'use client';
 
-import {
-    ActionIcon,
-    Button,
-    Card,
-    Group,
-    NumberInput,
-    Stack,
-    Switch,
-    Text,
-    TextInput,
-} from '@mantine/core';
+import { ActionIcon, Button, Card, Group, NumberInput, Stack, Switch, Text, TextInput } from '@mantine/core';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { generateSku } from '../utils/skuUtils';
 
 export interface VariantFormItem {
     id: string;
@@ -44,11 +35,7 @@ export function ProductVariantForm({ variants, onChange }: ProductVariantFormPro
         onChange(variants.filter((item) => item.id !== id));
     };
 
-    const handleUpdateVariant = (
-        id: string,
-        field: keyof VariantFormItem,
-        value: string | number | boolean
-    ) => {
+    const handleUpdateVariant = (id: string, field: keyof VariantFormItem, value: string | number | boolean) => {
         const updated = variants.map((item) => {
             if (item.id === id) {
                 return { ...item, [field]: value };
@@ -67,12 +54,7 @@ export function ProductVariantForm({ variants, onChange }: ProductVariantFormPro
                         Tambahkan variasi seperti ukuran, warna, atau spesifikasi.
                     </Text>
                 </div>
-                <Button
-                    variant="light"
-                    size="xs"
-                    leftSection={<IconPlus size={14} />}
-                    onClick={handleAddVariant}
-                >
+                <Button variant="light" size="xs" leftSection={<IconPlus size={14} />} onClick={handleAddVariant}>
                     Tambah Varian
                 </Button>
             </Group>
@@ -101,18 +83,32 @@ export function ProductVariantForm({ variants, onChange }: ProductVariantFormPro
                                 label="Nama Varian"
                                 placeholder="Contoh: Merah / XL"
                                 value={variant.variantName}
-                                onChange={(e) =>
-                                    handleUpdateVariant(variant.id, 'variantName', e.target.value)
-                                }
+                                onChange={(e) => handleUpdateVariant(variant.id, 'variantName', e.target.value)}
+                                onBlur={(e) => {
+                                    if (!variant.sku.trim() && e.currentTarget.value.trim()) {
+                                        handleUpdateVariant(variant.id, 'sku', generateSku(e.currentTarget.value));
+                                    }
+                                }}
                                 required
                             />
                             <TextInput
                                 label="SKU"
                                 placeholder="Kode SKU"
                                 value={variant.sku}
-                                onChange={(e) =>
-                                    handleUpdateVariant(variant.id, 'sku', e.target.value)
+                                onChange={(e) => handleUpdateVariant(variant.id, 'sku', e.target.value)}
+                                rightSection={
+                                    <Button
+                                        variant="subtle"
+                                        size="compact-xs"
+                                        type="button"
+                                        onClick={() =>
+                                            handleUpdateVariant(variant.id, 'sku', generateSku(variant.variantName))
+                                        }
+                                    >
+                                        Otomatis
+                                    </Button>
                                 }
+                                rightSectionWidth={75}
                                 required
                             />
                         </Group>
@@ -122,9 +118,7 @@ export function ProductVariantForm({ variants, onChange }: ProductVariantFormPro
                                 label="Harga Jual"
                                 placeholder="0"
                                 value={variant.sellingPrice}
-                                onChange={(val) =>
-                                    handleUpdateVariant(variant.id, 'sellingPrice', val ?? '')
-                                }
+                                onChange={(val) => handleUpdateVariant(variant.id, 'sellingPrice', val ?? '')}
                                 min={0}
                                 required
                             />
@@ -132,9 +126,7 @@ export function ProductVariantForm({ variants, onChange }: ProductVariantFormPro
                                 label="Batas Stok Minimum"
                                 placeholder="10"
                                 value={variant.lowStockThreshold}
-                                onChange={(val) =>
-                                    handleUpdateVariant(variant.id, 'lowStockThreshold', val ?? 0)
-                                }
+                                onChange={(val) => handleUpdateVariant(variant.id, 'lowStockThreshold', val ?? 0)}
                                 min={0}
                             />
                         </Group>
@@ -142,9 +134,7 @@ export function ProductVariantForm({ variants, onChange }: ProductVariantFormPro
                         <Switch
                             label="Status Aktif"
                             checked={variant.isActive}
-                            onChange={(e) =>
-                                handleUpdateVariant(variant.id, 'isActive', e.currentTarget.checked)
-                            }
+                            onChange={(e) => handleUpdateVariant(variant.id, 'isActive', e.currentTarget.checked)}
                         />
                     </Stack>
                 </Card>

@@ -9,7 +9,7 @@ export interface DashboardMetrics {
 export interface SalesChartItem {
     label: string;
     tanggal: string;
-    penjualan: number;
+    penjualan: number | null;
 }
 
 export interface TxChartItem {

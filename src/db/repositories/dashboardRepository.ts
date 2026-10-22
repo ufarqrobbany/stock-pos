@@ -122,12 +122,20 @@ export const dashboardRepository = {
             return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         });
 
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
         const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
         return Array.from({ length: 7 }, (_, i) => {
             const d = new Date(monday);
             d.setDate(monday.getDate() + i);
+            const itemDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const isFuture = itemDate.getTime() > todayStart.getTime();
             const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-            return { label: dayNames[i]!, tanggal: fmtDate(d), penjualan: map.get(key) ?? 0 };
+            return {
+                label: dayNames[i]!,
+                tanggal: fmtDate(d),
+                penjualan: isFuture ? null : (map.get(key) ?? 0),
+            };
         });
     },
 
@@ -139,11 +147,17 @@ export const dashboardRepository = {
         const { start, end } = getMonthRange(year, month);
 
         const map = await sumByKey(start, end, (iso) => pad(new Date(iso).getDate()));
+        const todayDate = now.getDate();
 
         return Array.from({ length: daysInMonth }, (_, i) => {
             const date = i + 1;
             const d = new Date(year, month, date);
-            return { label: pad(date), tanggal: fmtDate(d), penjualan: map.get(pad(date)) ?? 0 };
+            const isFuture = date > todayDate;
+            return {
+                label: pad(date),
+                tanggal: fmtDate(d),
+                penjualan: isFuture ? null : (map.get(pad(date)) ?? 0),
+            };
         });
     },
 
@@ -153,15 +167,17 @@ export const dashboardRepository = {
         const { start, end } = getYearRange(year);
 
         const map = await sumByKey(start, end, (iso) => pad(new Date(iso).getMonth() + 1));
+        const currentMonth = now.getMonth();
 
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         return monthNames.map((name, mo) => {
             const first = new Date(year, mo, 1);
             const last = new Date(year, mo + 1, 0);
+            const isFuture = mo > currentMonth;
             return {
                 label: name,
                 tanggal: `${fmtDate(first)} – ${fmtDate(last)}`,
-                penjualan: map.get(pad(mo + 1)) ?? 0,
+                penjualan: isFuture ? null : (map.get(pad(mo + 1)) ?? 0),
             };
         });
     },

@@ -1,0 +1,22 @@
+.segmentedRoot {
+  background-color: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-surface-2);
+  box-shadow: none;
+}
+
+.segmentedIndicator {
+  box-shadow: none;
+}
+
+.segmentedLabel[data-active] {
+  font-weight: 600;
+}
+
+.segmentedLabel:not([data-active]) {
+  color: var(--mantine-color-neutral-4);
+  font-weight: 500;
+}
+
+.segmentedLabel:not([data-active]):hover {
+  color: var(--mantine-color-neutral-6);
+}

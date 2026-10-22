@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge, Button, Card, Group, Modal, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { ActionIcon, Badge, Button, Card, Group, Modal, Text, Title, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconArrowRight, IconPackageImport } from '@tabler/icons-react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -56,8 +56,9 @@ export function LowStockTable() {
         {
             id: 'name',
             label: 'Nama Produk',
+            width: 180,
             render: (row) => (
-                <Text size="sm" fw={500}>
+                <Text size="sm" fw={500} lineClamp={1} title={row.name}>
                     {row.name}
                 </Text>
             ),
@@ -65,7 +66,7 @@ export function LowStockTable() {
         {
             id: 'sku',
             label: 'SKU',
-            width: 150,
+            width: 110,
             render: (row) => (
                 <Text size="xs" ff="monospace" c="dimmed">
                     {row.sku}
@@ -75,7 +76,7 @@ export function LowStockTable() {
         {
             id: 'stock',
             label: 'Stok Sisa',
-            width: 120,
+            width: 85,
             align: 'center',
             render: (row) =>
                 row.stock === 0 ? (
@@ -83,45 +84,31 @@ export function LowStockTable() {
                         Habis
                     </Badge>
                 ) : (
-                    <Stack gap={0} align="center">
-                        <Text size="sm" fw={700} c="orange">
-                            {row.stock}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                            min. {row.threshold}
-                        </Text>
-                    </Stack>
+                    <Text size="sm" fw={700} c="orange">
+                        {row.stock}
+                    </Text>
                 ),
         },
         {
-            id: 'aksi',
+            id: 'actions',
             label: 'Aksi',
-            width: 130,
+            width: 65,
             align: 'center',
             render: (row) => (
-                <Button
-                    size="xs"
-                    variant="light"
-                    color="blue"
-                    leftSection={<IconPackageImport size={14} />}
-                    onClick={() => handleOpenStockIn(row)}
-                >
-                    Stock In
-                </Button>
+                <Tooltip label="Stock In" withArrow position="left">
+                    <ActionIcon variant="subtle" onClick={() => handleOpenStockIn(row)} aria-label="Stock In">
+                        <IconPackageImport size={16} />
+                    </ActionIcon>
+                </Tooltip>
             ),
         },
     ];
 
     return (
         <>
-            <Card withBorder shadow="none" p="md" radius="md">
+            <Card withBorder shadow="none" p="md" radius="md" h="100%">
                 <Group justify="space-between" align="flex-start" mb="xs">
-                    <Stack gap={2}>
-                        <Title order={4}>Peringatan Stok Menipis</Title>
-                        <Text size="xs" c="dimmed">
-                            Produk yang berada di bawah batas minimum stok.
-                        </Text>
-                    </Stack>
+                    <Title order={4}>Peringatan Stok Menipis</Title>
                     {hasMore && (
                         <Button
                             component={Link}
@@ -135,37 +122,17 @@ export function LowStockTable() {
                     )}
                 </Group>
 
-                {loading ? (
-                    <Stack gap="xs">
-                        {['skeleton-0', 'skeleton-1', 'skeleton-2'].map((skeletonKey) => (
-                            <Skeleton key={skeletonKey} height={40} radius="sm" />
-                        ))}
-                    </Stack>
-                ) : (
-                    <DataTable
-                        columns={columns}
-                        data={displayData}
-                        getRowKey={(row) => row.key}
-                        emptyText="Semua produk stoknya aman."
-                    />
-                )}
+                <DataTable
+                    columns={columns}
+                    data={displayData}
+                    loading={loading}
+                    getRowKey={(row) => row.key}
+                    emptyText="Semua produk stoknya aman."
+                    minWidth={440}
+                />
             </Card>
 
-            <Modal
-                opened={opened}
-                onClose={close}
-                title={
-                    <Stack gap={2}>
-                        <Text fw={600}>Tambah Stok Masuk</Text>
-                        {selectedItem && (
-                            <Text size="xs" c="dimmed">
-                                {selectedItem.name}
-                            </Text>
-                        )}
-                    </Stack>
-                }
-                size="lg"
-            >
+            <Modal opened={opened} onClose={close} title={<Text fw={600}>Tambah Stok Masuk</Text>} size="lg">
                 <StockInForm
                     key={selectedItem?.key}
                     initialProductId={selectedItem?.productId ?? null}

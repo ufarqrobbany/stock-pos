@@ -31,7 +31,7 @@ export function AIChatBubble({ message, isLoading }: AIChatBubbleProps) {
             </Box>
 
             {message?.time && (
-                <Text size="10px" c="dimmed" mt={2} ta={isUser ? 'right' : 'left'}>
+                <Text size="10px" c="dimmed" mt={2} ta={isUser ? 'right' : 'left'} suppressHydrationWarning>
                     {message.time}
                 </Text>
             )}

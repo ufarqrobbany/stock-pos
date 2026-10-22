@@ -7,6 +7,7 @@ import type { Category } from '@/db/types/product';
 import { ProductForm, type ProductFormValues } from '@/features/products/components/productForm';
 import { categoryService } from '@/features/products/services/categoryService';
 import { productService } from '@/features/products/services/productService';
+import { generateSku } from '@/features/products/utils/skuUtils';
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -29,7 +30,7 @@ export default function NewProductPage() {
                 categoryId: values.categoryId as string,
                 image: values.image.trim() || undefined,
                 hasVariants: values.hasVariants,
-                sku: !values.hasVariants && values.sku ? values.sku.trim() : null,
+                sku: !values.hasVariants ? values.sku?.trim() || generateSku(values.name) : null,
                 sellingPrice:
                     !values.hasVariants && typeof values.sellingPrice === 'number' ? values.sellingPrice : null,
                 lowStockThreshold:
