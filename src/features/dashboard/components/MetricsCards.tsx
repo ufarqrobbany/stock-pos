@@ -1,55 +1,103 @@
 'use client';
 
-import { Card, Group, SimpleGrid, Text } from '@mantine/core';
+import { Card, Center, Group, Loader, SimpleGrid, Text } from '@mantine/core';
 import { IconBoxSeam, IconCash, IconReceipt } from '@tabler/icons-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import type { ReactNode } from 'react';
+import { dashboardService } from '@/features/dashboard/services/dashboardService';
+
+interface MetricCardProps {
+    label: string;
+    value: string;
+    icon: ReactNode;
+    subtext?: string;
+    subtextColor?: string;
+    loading?: boolean;
+}
+
+function MetricCard({ label, value, icon, subtext, subtextColor = 'dimmed', loading }: MetricCardProps) {
+    return (
+        <Card withBorder shadow="none" p="md" radius="md">
+            <Group justify="space-between">
+                <Text size="xs" c="dimmed" fw={700} tt="uppercase">
+                    {label}
+                </Text>
+                {icon}
+            </Group>
+            {loading ? (
+                <Center h={56}>
+                    <Loader size="sm" color="primary" />
+                </Center>
+            ) : (
+                <>
+                    <Text fw={700} fz="xl" mt="sm">
+                        {value}
+                    </Text>
+                    {subtext && (
+                        <Text size="xs" c={subtextColor} mt={4}>
+                            {subtext}
+                        </Text>
+                    )}
+                </>
+            )}
+        </Card>
+    );
+}
+
+function formatRupiah(amount: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(amount);
+}
+
+function getSalesSubtext(today: number, yesterday: number): { text: string; color: string } {
+    if (today === 0) {
+        return { text: 'Belum ada transaksi hari ini', color: 'dimmed' };
+    }
+    if (yesterday === 0) {
+        return { text: 'Tidak ada data kemarin', color: 'dimmed' };
+    }
+    const diff = ((today - yesterday) / yesterday) * 100;
+    if (diff === 0) {
+        return { text: 'Sama dengan kemarin', color: 'dimmed' };
+    }
+    const sign = diff > 0 ? '+' : '';
+    const color = diff > 0 ? 'green' : 'red';
+    return { text: `${sign}${diff.toFixed(1)}% dibanding kemarin`, color };
+}
 
 export function MetricsCards() {
+    const metrics = useLiveQuery(() => dashboardService.getMetrics(), []);
+    const loading = metrics === undefined;
+
+    const salesSubtext = metrics
+        ? getSalesSubtext(metrics.salesToday, metrics.salesYesterday)
+        : { text: '', color: 'dimmed' };
+
     return (
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-            <Card withBorder p="md" radius="md">
-                <Group justify="space-between">
-                    <Text size="xs" c="dimmed" fw={700} tt="uppercase">
-                        Total Penjualan
-                    </Text>
-                    <IconCash size={20} color="var(--mantine-color-blue-6)" />
-                </Group>
-                <Text fw={700} fz="xl" mt="sm">
-                    Rp1.450.000
-                </Text>
-                <Text size="xs" c="green" mt={4}>
-                    +12% dibanding kemarin
-                </Text>
-            </Card>
-
-            <Card withBorder p="md" radius="md">
-                <Group justify="space-between">
-                    <Text size="xs" c="dimmed" fw={700} tt="uppercase">
-                        Transaksi Berhasil
-                    </Text>
-                    <IconReceipt size={20} color="var(--mantine-color-teal-6)" />
-                </Group>
-                <Text fw={700} fz="xl" mt="sm">
-                    28 Transaksi
-                </Text>
-                <Text size="xs" c="dimmed" mt={4}>
-                    Rata-rata order Rp51.000
-                </Text>
-            </Card>
-
-            <Card withBorder p="md" radius="md">
-                <Group justify="space-between">
-                    <Text size="xs" c="dimmed" fw={700} tt="uppercase">
-                        Stok Menipis
-                    </Text>
-                    <IconBoxSeam size={20} color="var(--mantine-color-red-6)" />
-                </Group>
-                <Text fw={700} fz="xl" mt="sm" c="red">
-                    4 Produk
-                </Text>
-                <Text size="xs" c="dimmed" mt={4}>
-                    Perlu segera restock
-                </Text>
-            </Card>
+            <MetricCard
+                label="Total Penjualan Hari Ini"
+                value={loading ? '' : formatRupiah(metrics?.salesToday ?? 0)}
+                icon={<IconCash size={20} color="var(--mantine-color-blue-6)" />}
+                subtext={salesSubtext.text}
+                subtextColor={salesSubtext.color}
+                loading={loading}
+            />
+            <MetricCard
+                label="Total Transaksi Hari Ini"
+                value={loading ? '' : `${metrics?.transactionsToday ?? 0} Transaksi`}
+                icon={<IconReceipt size={20} color="var(--mantine-color-teal-6)" />}
+                loading={loading}
+            />
+            <MetricCard
+                label="Unit Terjual Hari Ini"
+                value={loading ? '' : `${metrics?.unitsSoldToday ?? 0} Unit`}
+                icon={<IconBoxSeam size={20} color="var(--mantine-color-red-6)" />}
+                loading={loading}
+            />
         </SimpleGrid>
     );
 }

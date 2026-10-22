@@ -1,49 +1,76 @@
 'use client';
 
-import { Badge, Card, Table, Text, Title } from '@mantine/core';
+import { Card, Text, Title } from '@mantine/core';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { DataTable } from '@/components/common/DataTable';
+import type { Column } from '@/components/common/DataTable/types';
+import { dashboardService } from '@/features/dashboard/services/dashboardService';
+import type { RecentTransactionRow } from '../types';
 
-const dummyTransactions = [
-    { id: 'TRX-001', time: '16:20 - 19 Okt 2026', total: 'Rp45.000', method: 'QRIS', status: 'COMPLETED' },
-    { id: 'TRX-002', time: '15:45 - 19 Okt 2026', total: 'Rp120.000', method: 'CASH', status: 'COMPLETED' },
-    { id: 'TRX-003', time: '14:10 - 19 Okt 2026', total: 'Rp85.000', method: 'TRANSFER', status: 'COMPLETED' },
+function formatDateTime(isoString: string): string {
+    const d = new Date(isoString);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const date = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    return `${time} · ${date}`;
+}
+
+const columns: Column<RecentTransactionRow>[] = [
+    {
+        id: 'transactionNumber',
+        label: 'No. Transaksi',
+        render: (row) => (
+            <Text size="sm" fw={600} ff="monospace">
+                {row.transactionNumber}
+            </Text>
+        ),
+    },
+    {
+        id: 'createdAt',
+        label: 'Waktu',
+        render: (row) => (
+            <Text size="sm" c="dimmed">
+                {formatDateTime(row.createdAt)}
+            </Text>
+        ),
+    },
+    {
+        id: 'cashierName',
+        label: 'Nama Kasir',
+        render: (row) => <Text size="sm">{row.cashierName}</Text>,
+    },
+    {
+        id: 'total',
+        label: 'Total',
+        width: 130,
+        align: 'right',
+        render: (row) => (
+            <Text size="sm" fw={700} c="green">
+                {row.total.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 })}
+            </Text>
+        ),
+    },
 ];
 
 export function RecentTransactionsTable() {
+    const data = useLiveQuery<RecentTransactionRow[]>(() => dashboardService.getRecentTransactions(5), []);
+
+    const loading = data === undefined;
+
     return (
-        <Card withBorder p="md" radius="md">
+        <Card withBorder shadow="none" p="md" radius="md" h="100%">
             <Title order={4} mb="xs">
                 Transaksi Terakhir
             </Title>
-            <Text size="xs" c="dimmed" mb="md">
-                Daftar transaksi penjualan kasir yang baru masuk.
-            </Text>
 
-            <Table striped highlightOnHover>
-                <Table.Thead>
-                    <Table.Tr>
-                        <Table.Th>No. Transaksi</Table.Th>
-                        <Table.Th>Waktu</Table.Th>
-                        <Table.Th>Metode</Table.Th>
-                        <Table.Th>Total</Table.Th>
-                        <Table.Th>Status</Table.Th>
-                    </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                    {dummyTransactions.map((trx) => (
-                        <Table.Tr key={trx.id}>
-                            <Table.Td fw={500}>{trx.id}</Table.Td>
-                            <Table.Td>{trx.time}</Table.Td>
-                            <Table.Td>{trx.method}</Table.Td>
-                            <Table.Td fw={600}>{trx.total}</Table.Td>
-                            <Table.Td>
-                                <Badge color="green" variant="light" size="sm">
-                                    {trx.status}
-                                </Badge>
-                            </Table.Td>
-                        </Table.Tr>
-                    ))}
-                </Table.Tbody>
-            </Table>
+            <DataTable
+                columns={columns}
+                data={data ?? []}
+                loading={loading}
+                getRowKey={(row) => row.id}
+                emptyText="Belum ada transaksi."
+                minWidth={440}
+            />
         </Card>
     );
 }

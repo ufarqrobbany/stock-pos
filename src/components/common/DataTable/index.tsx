@@ -41,3 +41,6 @@ export function DataTable<T>({
         </div>
     );
 }
+
+export * from './types';
+

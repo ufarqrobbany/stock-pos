@@ -22,6 +22,7 @@ import { IconTrash } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import type { Category } from '@/db/types/product';
 import { ProductVariantForm, type VariantFormItem } from '@/features/products/components/productVariantForm';
+import { generateSku } from '../utils/skuUtils';
 
 export interface ProductFormValues {
     name: string;
@@ -74,6 +75,7 @@ export function ProductForm({
             categoryId: (value) => (value ? null : 'Kategori produk wajib dipilih.'),
             sellingPrice: (value, values) =>
                 !values.hasVariants && (value === '' || value === undefined) ? 'Harga jual wajib diisi.' : null,
+            sku: (value, values) => (!values.hasVariants && !value?.trim() ? 'SKU produk wajib diisi.' : null),
             variants: (values, formValues) => {
                 if (formValues.hasVariants && values.length === 0) {
                     return 'Tambahkan minimal satu varian produk.';
@@ -166,8 +168,19 @@ export function ProductForm({
         form.setFieldValue('image', '');
     };
 
+    const handleFormSubmit = (values: ProductFormValues) => {
+        let finalValues = { ...values };
+        if (!finalValues.hasVariants && !finalValues.sku?.trim()) {
+            finalValues = {
+                ...finalValues,
+                sku: generateSku(finalValues.name),
+            };
+        }
+        return onSubmit(finalValues);
+    };
+
     return (
-        <form onSubmit={form.onSubmit((values) => onSubmit(values))}>
+        <form onSubmit={form.onSubmit(handleFormSubmit)}>
             <Stack gap="lg">
                 {/* Informasi Dasar Produk */}
                 <Card withBorder p="md" pos="relative">
@@ -178,6 +191,16 @@ export function ProductForm({
                             placeholder="Contoh: Kemeja Polos"
                             key={form.key('name')}
                             {...form.getInputProps('name')}
+                            onBlur={(e) => {
+                                form.getInputProps('name').onBlur?.(e);
+                                if (
+                                    !form.values.hasVariants &&
+                                    !form.values.sku.trim() &&
+                                    e.currentTarget.value.trim()
+                                ) {
+                                    form.setFieldValue('sku', generateSku(e.currentTarget.value));
+                                }
+                            }}
                             required
                         />
                         <Select
@@ -283,9 +306,23 @@ export function ProductForm({
                             <Stack gap="sm">
                                 <TextInput
                                     label="SKU"
-                                    placeholder="Kode SKU Produk"
+                                    placeholder="Contoh: KEME-8F2A"
                                     key={form.key('sku')}
                                     {...form.getInputProps('sku')}
+                                    required={!form.values.hasVariants}
+                                    rightSection={
+                                        <Button
+                                            variant="subtle"
+                                            size="compact-xs"
+                                            type="button"
+                                            onClick={() => {
+                                                form.setFieldValue('sku', generateSku(form.values.name));
+                                            }}
+                                        >
+                                            Otomatis
+                                        </Button>
+                                    }
+                                    rightSectionWidth={75}
                                 />
                                 <Group grow>
                                     <NumberInput

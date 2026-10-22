@@ -13,7 +13,7 @@ export default async function DashboardPage() {
     const user = parseSessionCookie(cookieStore.get('stockpos_session')?.value);
 
     return (
-        <RoleWrapper allowedRoles={['OWNER', 'CASHIER', 'INVENTORY']} user={user} type="page">
+        <RoleWrapper allowedRoles={['OWNER']} user={user} type="page">
             <DashboardView />
         </RoleWrapper>
     );
