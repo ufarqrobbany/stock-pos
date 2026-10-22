@@ -35,6 +35,5 @@ export const dashboardService = {
     getTxThisMonth: dashboardRepository.getTxThisMonth.bind(dashboardRepository),
     getTxThisYear: dashboardRepository.getTxThisYear.bind(dashboardRepository),
     getLowStock: dashboardRepository.getLowStock.bind(dashboardRepository),
-    getTopProducts: dashboardRepository.getTopProducts.bind(dashboardRepository),
     getRecentTransactions: dashboardRepository.getRecentTransactions.bind(dashboardRepository),
 };
