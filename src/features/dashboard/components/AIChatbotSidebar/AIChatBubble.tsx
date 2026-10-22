@@ -1,6 +1,8 @@
 'use client';
 
 import { Box, Loader, Text } from '@mantine/core';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { ChatMessage } from '../../types/chatbot';
 import classes from './index.module.css';
 
@@ -25,8 +27,14 @@ export function AIChatBubble({ message, isLoading }: AIChatBubbleProps) {
 
                 {isLoading ? (
                     <Loader size="xs" type="dots" color="primary.6" />
+                ) : isUser ? (
+                    <Text size="xs" className={classes.userText}>
+                        {message?.text}
+                    </Text>
                 ) : (
-                    <Text size="xs">{message?.text}</Text>
+                    <Box className={classes.markdownContent}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message?.text || ''}</ReactMarkdown>
+                    </Box>
                 )}
             </Box>
 

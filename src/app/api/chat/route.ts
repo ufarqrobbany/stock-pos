@@ -1,6 +1,8 @@
 import { groq } from '@ai-sdk/groq';
 import { convertToModelMessages, streamText } from 'ai';
 import { NextResponse } from 'next/server';
+import { buildChatbotSystemPrompt } from '@/features/dashboard/constants/chatbotPrompt';
+import { chatbotTools } from '@/features/dashboard/constants/chatbotTools';
 
 export async function POST(req: Request) {
     if (!process.env.GROQ_API_KEY) {
@@ -17,7 +19,9 @@ export async function POST(req: Request) {
 
         const result = streamText({
             model: groq(process.env.GROQ_MODEL || 'qwen/qwen3.8-27b'),
+            system: buildChatbotSystemPrompt(),
             messages: modelMessages,
+            tools: chatbotTools,
         });
 
         return result.toUIMessageStreamResponse();

@@ -12,7 +12,8 @@ export interface AIChatbotSidebarProps {
 }
 
 export function AIChatbotSidebar({ opened, onClose }: AIChatbotSidebarProps) {
-    const { messages, inputValue, setInputValue, isLoading, messagesEndRef, handleSend } = useAIChatbot({ opened });
+    const { messages, inputValue, setInputValue, isLoading, showLoadingBubble, messagesEndRef, handleSend } =
+        useAIChatbot({ opened });
 
     return (
         <Box className={classes.aside} p="sm" data-open={opened}>
@@ -39,7 +40,7 @@ export function AIChatbotSidebar({ opened, onClose }: AIChatbotSidebarProps) {
                         <AIChatBubble key={msg.id} message={msg} />
                     ))}
 
-                    {isLoading && <AIChatBubble isLoading />}
+                    {showLoadingBubble && <AIChatBubble isLoading />}
 
                     <div ref={messagesEndRef} />
                 </Stack>
